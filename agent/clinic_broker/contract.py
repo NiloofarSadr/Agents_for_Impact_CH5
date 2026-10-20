@@ -13,8 +13,8 @@ from pydantic import BaseModel, Field, field_validator
 # ---------------------------------------------------------------------------
 # Fixed model & county constants
 # ---------------------------------------------------------------------------
-# Defaults to gemini-2.5-flash on Vertex AI (or gemini-3.6-flash if specified via env)
-MODEL_NAME: str = os.environ.get("MODEL_NAME", "gemini-2.5-flash")
+# Defaults to gemini-3.6-flash on Vertex AI (or gemini-3.6-flash if specified via env)
+MODEL_NAME: str = os.environ.get("MODEL_NAME", "gemini-3.6-flash")
 COUNTY_FIPS: str = "13121"
 COUNTY_NAME: str = "Fulton County, GA"
 

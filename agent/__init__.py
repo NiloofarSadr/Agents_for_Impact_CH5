@@ -6,7 +6,7 @@ import os
 if not os.environ.get("GEMINI_API_KEY"):
     os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "true")
     os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "qwiklabs-gcp-04-26e02fd45203")
-    os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
+    os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
 
 from .clinic_broker.agent import root_agent
 
