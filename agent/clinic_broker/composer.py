@@ -49,7 +49,7 @@ def default_fulton_limits() -> list[Claim]:
         Claim(
             claim=(
                 "No active federal shortage-area designations exist in Fulton County: "
-                "0 active designations and 99 designations with status 'Proposed For Withdrawal' in shortage_areas."
+                "0 active designations and 99 geographic designations with status 'Proposed For Withdrawal' in shortage_areas (no signal, not 'no problem')."
             ),
             value=0,
             unit="active_designations",
@@ -60,8 +60,8 @@ def default_fulton_limits() -> list[Claim]:
         ),
         Claim(
             claim=(
-                "I can tell you about the region, not this street: PM2.5 air quality (mean 9.75 ug/m3, "
-                "p90/p10 ratio 1.05x across 327 tracts) comes from a 12 km EPA grid and cannot rank census tracts."
+                "I can tell you about the region, not this street: PM2.5 air quality varies only 1.05x across Fulton County "
+                "(8.98 to 9.81 ug/m3) on a 12 km EPA grid model wearing tract IDs; it cannot rank neighborhood tracts."
             ),
             value=1.05,
             unit="p90_p10_ratio",
@@ -72,9 +72,9 @@ def default_fulton_limits() -> list[Claim]:
         ),
         Claim(
             claim=(
-                "I can tell you about the region, not this street: Respiratory ED visit trends "
-                "(2.91% latest week; 8-week range 2.75%-5.93%) are reported for a multi-county Health Service Area "
-                "(Fulton, Clayton, DeKalb, Gwinnett) and cannot differentiate neighborhoods."
+                "I can tell you about the region, not this street: Respiratory emergency department trends "
+                "(COVID, flu, RSV) are reported for a 4-county Health Service Area (Clayton, DeKalb, Fulton, Gwinnett) "
+                "and cannot differentiate neighborhoods."
             ),
             value=2.91,
             unit="pct_ed_visits_resp",
@@ -85,8 +85,20 @@ def default_fulton_limits() -> list[Claim]:
         ),
         Claim(
             claim=(
-                "47 of 51 federally recognized safety-net clinic records in Fulton County report 0 weekly operating "
-                "hours in HRSA data (only 4 report hours > 0), and 0 report Saturday clinic hours."
+                "Adult safety-net access gap: 41% to 60% of Fulton tracts (135 to 194 of 326) are farther from adult safety-net care "
+                "than from any care (worst distance 28.6 to 39.8 km). School clinics were excluded from distances because they may serve students only."
+            ),
+            value=194,
+            unit="tracts_with_safety_net_gap",
+            tract_id=None,
+            scale=Scale.TRACT,
+            kind=Kind.COMPUTED_UPPER_BOUND,
+            source="tract_access_adult.km_to_safety_net_adult",
+        ),
+        Claim(
+            claim=(
+                "Clinic operating hours: 5 of 30 health center sites open < 20 hours/week (minimum 4 h); "
+                "47 of 51 safety-net records report 0 weekly hours in HRSA data, and 0 report Saturday hours."
             ),
             value=47,
             unit="sites_missing_hours",
@@ -97,11 +109,11 @@ def default_fulton_limits() -> list[Claim]:
         ),
         Claim(
             claim=(
-                "All clinic distances (km_to_safety_net, km_to_any_care) are straight-line centroid upper bounds "
-                "to federally recognized sites only—not street driving or MARTA transit time."
+                "Distances are straight-line centroid upper bounds to federally recognized sites only—not street driving "
+                "or MARTA transit times; informal or non-federal care may be closer."
             ),
-            value=8.0,
-            unit="km_normalization_cap",
+            value=5.0,
+            unit="km_minimum_spacing",
             tract_id=None,
             scale=Scale.TRACT,
             kind=Kind.COMPUTED_UPPER_BOUND,
@@ -109,13 +121,13 @@ def default_fulton_limits() -> list[Claim]:
         ),
         Claim(
             claim=(
-                "25 of 327 Fulton tracts have NULL CDC PLACES modeled prevalence, 1 tract (13121980000, Airport) "
-                "has -999 missing SVI pct_no_vehicle, and 0 _crude95ci confidence-interval columns exist in burden_tracts "
-                "(ties within 5% need_score are evaluated as 'approximate, no CI loaded')."
+                "High-need trade-off surfaced to human outreach lead: Tract 13121011431 (34.6% uninsured, ~75% Hispanic) "
+                "is in no passing 4-stop plan because including it pushes other groups below the 0.8 equity threshold. "
+                "Recommended for dedicated Saturday deployment next month with Spanish navigators."
             ),
-            value=25,
-            unit="tracts_missing_places",
-            tract_id=None,
+            value=34.6,
+            unit="pct_uninsured_11431",
+            tract_id="13121011431",
             scale=Scale.TRACT,
             kind=Kind.MODELED,
             source="burden_tracts.pct_uninsured",
@@ -150,7 +162,31 @@ def coerce_plan_draft(raw_draft: Any, fallback_version: int = 1) -> PlanDraft:
     parsed = _parse_json_or_obj(raw_draft)
     if isinstance(parsed, dict) and "picks" in parsed:
         try:
-            return PlanDraft.model_validate(parsed)
+            # Normalize minimal picks if necessary
+            raw_picks = parsed.get("picks") or []
+            normalized_picks = []
+            for idx, p in enumerate(raw_picks, start=1):
+                if isinstance(p, dict):
+                    norm_p = {
+                        "rank": p.get("rank", idx),
+                        "saturday_index": p.get("saturday_index", idx),
+                        "tract_id": str(p.get("tract_id", "")).strip().zfill(11),
+                        "score": float(p.get("score", 1.0)),
+                        "reasons": p.get("reasons", []),
+                        "flagged": bool(p.get("flagged", False)),
+                        "flag_reason": p.get("flag_reason"),
+                        "latitude": p.get("latitude"),
+                        "longitude": p.get("longitude"),
+                        "km_to_safety_net": p.get("km_to_safety_net"),
+                    }
+                    normalized_picks.append(SitePick.model_validate(norm_p))
+                elif isinstance(p, SitePick):
+                    normalized_picks.append(p)
+            return PlanDraft(
+                version=int(parsed.get("version", fallback_version)),
+                picks=normalized_picks,
+                method_notes=parsed.get("method_notes"),
+            )
         except Exception:
             pass
     # Fallback to deterministic score_and_schedule if LLM returned prose around JSON

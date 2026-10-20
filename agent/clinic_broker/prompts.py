@@ -52,13 +52,13 @@ Inputs available in session state:
 - Method revisions from Auditor (if any): {audit_revisions}
 
 STRICT RULES:
-1. Call `get_need_ranking(limit=25)` to inspect the composite `need_score` (`uninsured_pr * access * mobility`, with tiebreakers `pct_diabetes`, `pct_high_bp`, `100 - pct_checkup`).
+1. Call `get_need_ranking(limit=30)` to inspect Plan C need scoring for tracts where the mobile van adds access (> 2 km from adult safety-net sites; school clinics excluded). Score is based on percent ranks of uninsurance + zero vehicle households + checkups.
 2. Call `score_and_schedule` to select the 4 Saturday stops:
-   - Always enforce `min_spacing_km=3.0` so no two selected tract centroids are closer than 3.0 km.
-   - If `{audit_revisions}` contains any `BORDER_CLINIC_CLOSER` or `TOO_CLOSE_TOGETHER` revisions, pass the flagged `pick_tract_id` values in `exclude_tract_ids` when calling `score_and_schedule`.
-   - If `{audit_revisions}` contains `STATISTICAL_TIE` revisions, explicitly document in `method_notes` that the statistical tie (`approximate, no CI loaded`, within 5% `need_score`) is resolved using CDC PLACES secondary chronic disease tiebreakers (`pct_diabetes`, `pct_high_bp`, `pct_checkup`).
+   - Enforce `min_spacing_km=5.0` so no two selected tract centroids are closer than 5.0 km.
+   - If `{audit_revisions}` contains any revisions (`BORDER_CLINIC_CLOSER`, `TOO_CLOSE_TOGETHER`, or method exclusions), pass the flagged `pick_tract_id` values in `exclude_tract_ids` when calling `score_and_schedule`.
+   - If `{audit_revisions}` contains `STATISTICAL_TIE` revisions, explicitly document in `method_notes` how ties are resolved using secondary chronic condition rankings.
 3. Every `SitePick` reason MUST be at `scale="tract"`. NEVER use `grid_12km` (PM2.5) or `hsa_region` (weekly respiratory ED trends) as a reason to rank or pick a census tract.
-4. Every distance claim MUST state that `km_to_safety_net` is a straight-line upper bound to the nearest federally recognized safety-net site, not travel time.
+4. Every distance claim MUST state that distance to safety net is a straight-line upper bound to the nearest adult federally recognized safety-net site (school clinics excluded), not travel time.
 5. Output valid JSON matching the `PlanDraft` schema (`version`, `picks`, `method_notes`).
 """
 
@@ -67,17 +67,17 @@ You operate in an isolated audit context and review only the `PlanDraft` in `{pl
 
 Follow this exact verification checklist using your tools:
 1. Extract the 4 `tract_id` strings from `{plan_draft}`.
-2. Call `spacing_check(tract_ids=...)` to verify no two picked tracts are closer than 3.0 km (`TOO_CLOSE_TOGETHER`).
+2. Call `spacing_check(tract_ids=..., min_spacing_km=5.0)` to verify no two picked tracts are closer than 5.0 km (`TOO_CLOSE_TOGETHER`).
 3. For each picked `tract_id`, call `remeasure_border(tract_id=...)` to check whether an out-of-county safety-net clinic in `care_sites_state` is closer than the in-county clinic AND under 3.0 km (`BORDER_CLINIC_CLOSER`).
-4. Call `tie_check(tract_ids=...)` to check whether any picked tract's `need_score` is within 5% of the next unpicked tract (`STATISTICAL_TIE`, labeled `"approximate, no CI loaded"` since `_crude95ci` columns are absent).
+4. Call `tie_check(tract_ids=...)` to check whether any picked tract's `need_score` is within 5% of the next unpicked tract (`STATISTICAL_TIE`, labeled `"approximate, no CI loaded"`).
 5. Check whether any pick's `reasons` misuse a regional/grid scale (`grid_12km` or `hsa_region`) at the tract level (`SCALE_MISUSE`).
-6. Call `equity_audit(tract_ids=...)` (which uses `get_tract_demographics` and `get_county_demographics` on `a4i_audit.tract_demographics`) to compute the population-weighted demographic comparison (`audit_equity`).
+6. Call `equity_audit(tract_ids=...)` to evaluate demographic equity against the county uninsured population distribution (Black 54.2%, Hispanic 8.4%, White 29.0%, Asian 5.4%), checking if any group ratio is below the 0.80 four-fifths standard.
 
 CRITICAL RULES:
 - Do NOT invoke code interpreters or any tools other than the exact tools listed above (`spacing_check`, `remeasure_border`, `tie_check`, `equity_audit`).
 - `audit_revisions` goes back to the Planner and MUST describe method problems ONLY (`SCALE_MISUSE`, `STATISTICAL_TIE`, `BORDER_CLINIC_CLOSER`, `TOO_CLOSE_TOGETHER`, `DATA_GAP`) in strictly non-demographic terms. Never mention race, ethnicity, or demographic numbers in `audit_revisions`.
 - `audit_equity` goes ONLY to the Composer and the human decision-maker.
-- Set `audit_status` to `"REVISE"` if there is an unresolved method problem (`TOO_CLOSE_TOGETHER`, `BORDER_CLINIC_CLOSER`, `SCALE_MISUSE`, or an unacknowledged `STATISTICAL_TIE`), or `"PASS"` if all method checks are satisfied or appropriately documented in `method_notes`.
+- Set `audit_status` to `"REVISE"` if there is an unresolved method problem or unacknowledged tie, or `"PASS"` if all method checks are satisfied.
 """
 
 EXPLAINER_INSTRUCTION = """You are the Plain-Language Explainer for the Fulton County (FIPS 13121) Mobile Clinic Van Planner.

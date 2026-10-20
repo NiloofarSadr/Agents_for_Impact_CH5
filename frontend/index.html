@@ -48,9 +48,17 @@
           <g id="map-picks"></g>
         </svg>
         <div class="map-legend">
-          <span><span class="legend-dot dot-pick"></span> Scheduled Stop</span>
-          <span><span class="legend-dot dot-flagged"></span> Flagged Stop</span>
+          <span><span class="legend-dot dot-pick"></span> Scheduled Stop (Sat 1-4)</span>
+          <span><span class="legend-dot dot-special"></span> Tract 11431 (Outreach Trade-off)</span>
           <span><span class="legend-dot dot-other"></span> Census Tract Centroid</span>
+        </div>
+      </div>
+
+      <div class="tradeoff-callout">
+        <span class="tradeoff-icon">💡</span>
+        <div>
+          <strong>Documented Access Trade-off: Tract 13121011431</strong>
+          <p>Highest uninsured rate in Fulton (34.6%), ~75% Hispanic. Excluded from passing 4-stop plans because it pushes other groups below 0.80 benchmark. <em>Human decision: Scheduled for month 2, week 1 with dedicated bilingual navigator.</em></p>
         </div>
       </div>
 
@@ -97,9 +105,10 @@
             <thead>
               <tr>
                 <th>Racial / Ethnic Group</th>
-                <th>Plan Pop %</th>
-                <th>County Pop %</th>
-                <th>Diff (pp)</th>
+                <th>Plan Share %</th>
+                <th>County Uninsured %</th>
+                <th>Audit Ratio</th>
+                <th>Equity Status</th>
               </tr>
             </thead>
             <tbody id="equity-table-body">

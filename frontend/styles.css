@@ -209,7 +209,41 @@ body {
 
 .dot-pick { background: #2563eb; }
 .dot-flagged { background: #d97706; }
+.dot-special { background: #64748b; }
 .dot-other { background: #94a3b8; }
+
+.tradeoff-callout {
+  display: flex;
+  gap: 0.6rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-left: 3px solid #64748b;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.78rem;
+  margin-bottom: 0.75rem;
+}
+
+.tradeoff-callout strong {
+  color: #1e293b;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.tradeoff-callout p {
+  color: #475569;
+  line-height: 1.4;
+}
+
+.ratio-pill {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.ratio-pill.pass { background: var(--success-light); color: var(--success); }
+.ratio-pill.fail { background: var(--warning-light); color: var(--warning); }
 
 /* Cards List */
 .cards-list {

@@ -43,10 +43,10 @@ tools:
     kind: bigquery-sql
     source: fulton-bq
     description: >-
-      Get straight-line upper-bound distances to any federal care site and nearest federal
-      safety-net site (FQHC or Health Center site), distance gap, no-vehicle household share
-      and national percentile, age 65+ share, lack-transport share (NULL in snapshot), centroid
-      lat/lon, and population for Fulton County census tracts.
+      Get straight-line upper-bound distances to any federal care site and nearest adult
+      safety-net site (FQHC or Health Center site, school clinics excluded), distance gap,
+      no-vehicle household share and national percentile, age 65+ share, lack-transport share
+      (NULL in snapshot), centroid lat/lon, and population for Fulton County census tracts.
     parameters:
       - name: limit
         type: integer
@@ -57,7 +57,9 @@ tools:
         LPAD(CAST(a.geo_id AS STRING), 11, '0') AS tract_id,
         a.total_pop AS population,
         ROUND(a.km_to_any_care, 2) AS any_care_km,
-        ROUND(a.km_to_safety_net, 2) AS safety_net_km,
+        ROUND(COALESCE(x.km_to_safety_net_adult, a.km_to_safety_net), 2) AS safety_net_km,
+        ROUND(x.km_to_safety_net_adult, 2) AS km_to_safety_net_adult,
+        ROUND(a.km_to_safety_net, 2) AS km_to_all_safety_net,
         ROUND(a.extra_km_if_uninsured, 2) AS gap_km,
         NULLIF(b.pct_no_vehicle, -999) AS pct_no_vehicle,
         NULLIF(b.pctile_no_vehicle, -999) AS pctile_no_vehicle,
@@ -67,11 +69,13 @@ tools:
         b.longitude,
         'tract' AS scale,
         'computed_upper_bound' AS kind,
-        'tract_access' AS source_table
+        'tract_access_adult+burden_tracts' AS source_table
       FROM `a4i_health.tract_access` AS a
       LEFT JOIN `a4i_health.burden_tracts` AS b
         ON LPAD(CAST(a.geo_id AS STRING), 11, '0') = LPAD(CAST(b.geo_id AS STRING), 11, '0')
-      ORDER BY a.km_to_safety_net DESC
+      LEFT JOIN `a4i_health.tract_access_adult` AS x
+        ON LPAD(CAST(a.geo_id AS STRING), 11, '0') = LPAD(CAST(x.geo_id AS STRING), 11, '0')
+      ORDER BY safety_net_km DESC
       LIMIT @limit
 
   get_site_capacity:
@@ -188,77 +192,68 @@ tools:
     kind: bigquery-sql
     source: fulton-bq
     description: >-
-      Compute the §5.2 composite need_score (uninsured_pr * access * mobility) for Fulton County
-      tracts and return the top N tracts. Tiebreakers: pct_diabetes DESC, pct_high_bp DESC,
-      pct_checkup ASC. Excludes PM2.5 and demographics.
+      Plan C need-only ranking for tracts where the mobile van adds access (>2 km from an adult
+      safety-net site; school clinics excluded). Computes need_score from uninsured + no_vehicle
+      + checkup percent ranks. Tiebreakers: pct_diabetes DESC, pct_high_bp DESC.
     parameters:
       - name: limit
         type: integer
         description: Number of top-ranked tracts to return.
-        default: 25
+        default: 30
     statement: |
-      WITH base AS (
+      WITH s AS (
         SELECT
-          LPAD(CAST(b.geo_id AS STRING), 11, '0') AS tract_id,
-          b.total_pop,
-          b.latitude,
-          b.longitude,
-          b.pct_uninsured,
+          LPAD(CAST(a.geo_id AS STRING), 11, '0') AS tract_id,
+          a.total_pop,
+          a.pct_uninsured,
+          IF(b.pct_no_vehicle < 0, NULL, b.pct_no_vehicle) AS pct_no_vehicle,
+          b.pctile_no_vehicle,
+          b.pct_checkup,
           b.pct_diabetes,
           b.pct_high_bp,
-          b.pct_checkup,
           b.pct_asthma,
           b.pct_copd,
           b.pct_mobility_difficulty,
-          NULLIF(b.pct_no_vehicle, -999) AS pct_no_vehicle,
-          NULLIF(b.pctile_no_vehicle, -999) AS pctile_no_vehicle,
-          NULLIF(b.pct_age_65_plus, -999) AS pct_age_65_plus,
-          a.km_to_any_care,
+          b.latitude,
+          b.longitude,
+          x.km_to_safety_net_adult,
           a.km_to_safety_net,
-          a.km_to_safety_net AS safety_net_km,
-          a.extra_km_if_uninsured,
-          PERCENT_RANK() OVER (ORDER BY b.pct_uninsured ASC) AS uninsured_pr,
-          LEAST(a.km_to_safety_net / 8.0, 1.0) AS access_factor,
-          0.5 + 0.5 * COALESCE(NULLIF(b.pctile_no_vehicle, -999), 0.0) AS mobility_factor
-        FROM `a4i_health.burden_tracts` AS b
-        INNER JOIN `a4i_health.tract_access` AS a
-          ON LPAD(CAST(b.geo_id AS STRING), 11, '0') = LPAD(CAST(a.geo_id AS STRING), 11, '0')
-        WHERE b.pct_uninsured IS NOT NULL
-          AND a.km_to_safety_net IS NOT NULL
+          a.km_to_any_care,
+          PERCENT_RANK() OVER (ORDER BY a.pct_uninsured)
+          + PERCENT_RANK() OVER (ORDER BY IF(b.pct_no_vehicle < 0, NULL, b.pct_no_vehicle))
+          + PERCENT_RANK() OVER (ORDER BY b.pct_checkup DESC) AS need_score
+        FROM `a4i_health.tract_access` a
+        LEFT JOIN `a4i_health.burden_tracts` b USING (geo_id)
+        JOIN `a4i_health.tract_access_adult` x USING (geo_id)
+        WHERE a.total_pop > 0
       )
       SELECT
         ROW_NUMBER() OVER (
-          ORDER BY
-            (uninsured_pr * access_factor * mobility_factor) DESC,
-            pct_diabetes DESC,
-            pct_high_bp DESC,
-            pct_checkup ASC
+          ORDER BY need_score DESC, pct_diabetes DESC, pct_high_bp DESC
         ) AS need_rank,
         tract_id,
-        ROUND(uninsured_pr * access_factor * mobility_factor, 4) AS need_score,
-        ROUND(uninsured_pr, 4) AS uninsured_pr,
-        ROUND(access_factor, 4) AS access_factor,
-        ROUND(mobility_factor, 4) AS mobility_factor,
+        ROUND(need_score, 4) AS need_score,
         pct_uninsured,
-        ROUND(km_to_safety_net, 2) AS safety_net_km,
+        ROUND(km_to_safety_net_adult, 2) AS safety_net_km,
+        ROUND(km_to_safety_net_adult, 2) AS km_to_safety_net_adult,
+        ROUND(km_to_safety_net, 2) AS km_to_safety_net,
         ROUND(km_to_any_care, 2) AS any_care_km,
-        ROUND(extra_km_if_uninsured, 2) AS gap_km,
         pct_no_vehicle,
         pctile_no_vehicle,
+        pct_checkup,
         pct_diabetes,
         pct_high_bp,
-        pct_checkup,
         pct_asthma,
         pct_copd,
         pct_mobility_difficulty,
-        pct_age_65_plus,
         total_pop,
         latitude,
         longitude,
         'tract' AS scale,
         'modeled' AS kind,
-        'burden_tracts+tract_access' AS source_table
-      FROM base
+        'rank_tracts_plan_c' AS source_table
+      FROM s
+      WHERE km_to_safety_net_adult > 2
       ORDER BY need_rank ASC
       LIMIT @limit
 
@@ -380,6 +375,34 @@ tools:
         'a4i_audit.tract_demographics' AS source_table
       FROM `a4i_audit.tract_demographics`
 
+  get_equity_audit_v2:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      AUDIT_TOOLS ONLY: Compute uninsured-weighted demographic shares for picked tracts
+      vs countywide uninsured benchmark (Black 54.2%, Hisp 8.4%, White 29.0%, Asian 5.4%).
+    parameters:
+      - name: tract_ids
+        type: string
+        description: Comma-separated 11-digit tract IDs.
+    statement: |
+      WITH acs AS (
+        SELECT a.geo_id, a.total_pop * b.pct_uninsured/100 AS w,
+          a.black_pop/a.total_pop AS s_black, a.hispanic_pop/a.total_pop AS s_hisp,
+          a.white_pop/a.total_pop AS s_white, a.asian_pop/a.total_pop AS s_asian
+        FROM `bigquery-public-data.census_bureau_acs.censustract_2020_5yr` a
+        JOIN a4i_health.burden_tracts b USING (geo_id)
+        WHERE a.total_pop > 0),
+      picked AS (SELECT geo_id FROM UNNEST(SPLIT(@tract_ids, ',')) AS geo_id),
+      g AS (SELECT 'county_uninsured' AS grp, * FROM acs
+            UNION ALL SELECT 'plan', acs.* FROM acs JOIN picked USING (geo_id))
+      SELECT grp, CAST(SUM(w) AS INT64) est_uninsured,
+        ROUND(100*SUM(w*s_black)/SUM(w),1) pct_black,
+        ROUND(100*SUM(w*s_hisp)/SUM(w),1) pct_hispanic,
+        ROUND(100*SUM(w*s_white)/SUM(w),1) pct_white,
+        ROUND(100*SUM(w*s_asian)/SUM(w),1) pct_asian
+      FROM g GROUP BY grp
+
 toolsets:
   scout_burden:
     - get_tract_burden
@@ -397,4 +420,5 @@ toolsets:
     - get_nearest_state_safety_net
     - get_tract_demographics
     - get_county_demographics
+    - get_equity_audit_v2
 

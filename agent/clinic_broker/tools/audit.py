@@ -222,12 +222,113 @@ def equity_audit(
     tract_demo_rows: list[dict[str, Any]] | None = None,
     county_demo_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Compare population-weighted demographic shares in picked tracts vs Fulton County overall.
+    """Compare demographic shares in picked tracts vs Fulton County overall.
 
-    Reads from `a4i_audit.tract_demographics` via `audit_tools`.
-    Reports 'no meaningful difference' honestly if all groups differ by <= 3.0 percentage points.
+    When running against live BigQuery, uses `get_equity_audit_v2` to benchmark against
+    the county uninsured population distribution (Black 54.2%, Hispanic 8.4%, White 29.0%,
+    Asian 5.4%), applying the four-fifths ratio threshold (< 0.8 = equity flag).
+
+    When offline test fixtures are provided, evaluates tract vs county population counts.
     """
     picks_norm = [str(t).strip().zfill(11) for t in tract_ids]
+
+    # Try live BigQuery uninsured-weighted demographic audit first if no explicit test fixtures
+    if tract_demo_rows is None and county_demo_rows is None:
+        try:
+            v2_rows = call_toolbox_tool("get_equity_audit_v2", {"tract_ids": ",".join(picks_norm)})
+            if len(v2_rows) >= 2:
+                by_grp = {r["grp"]: r for r in v2_rows}
+                c_unins = by_grp.get("county_uninsured", {})
+                p_unins = by_grp.get("plan", {})
+
+                c_total_est = int(c_unins.get("est_uninsured") or 114470)
+                p_total_est = int(p_unins.get("est_uninsured") or 0)
+
+                group_keys = [
+                    ("Black or African American (Non-Hispanic)", "pct_black"),
+                    ("White (Non-Hispanic)", "pct_white"),
+                    ("Hispanic or Latino (Any Race)", "pct_hispanic"),
+                    ("Asian (Non-Hispanic)", "pct_asian"),
+                ]
+
+                table: list[EquityGroupComparison] = []
+                flags: list[str] = []
+
+                for label, k in group_keys:
+                    p_pct = float(p_unins.get(k) or 0.0)
+                    c_pct = float(c_unins.get(k) or 0.0)
+                    diff = round(p_pct - c_pct, 1)
+                    ratio = round(p_pct / c_pct, 2) if c_pct > 0 else 1.0
+                    is_flagged = ratio < 0.8
+                    if is_flagged:
+                        flags.append(f"{label} ({ratio:.2f} < 0.80)")
+
+                    p_pop = int(round(p_total_est * (p_pct / 100.0)))
+                    c_pop = int(round(c_total_est * (c_pct / 100.0)))
+
+                    table.append(
+                        EquityGroupComparison(
+                            group=label,
+                            plan_population=p_pop,
+                            plan_share_pct=p_pct,
+                            county_population=c_pop,
+                            county_share_pct=c_pct,
+                            diff_pct_points=diff,
+                            audit_ratio=ratio,
+                            flagged=is_flagged,
+                        )
+                    )
+
+                # Other / combined
+                p_sum = sum(float(p_unins.get(k) or 0.0) for _, k in group_keys)
+                c_sum = sum(float(c_unins.get(k) or 0.0) for _, k in group_keys)
+                p_other_pct = round(max(0.0, 100.0 - p_sum), 1)
+                c_other_pct = round(max(0.0, 100.0 - c_sum), 1)
+                table.append(
+                    EquityGroupComparison(
+                        group="Other / Two or More Races",
+                        plan_population=int(round(p_total_est * (p_other_pct / 100.0))),
+                        plan_share_pct=p_other_pct,
+                        county_population=int(round(c_total_est * (c_other_pct / 100.0))),
+                        county_share_pct=c_other_pct,
+                        diff_pct_points=round(p_other_pct - c_other_pct, 1),
+                        audit_ratio=round(p_other_pct / c_other_pct, 2) if c_other_pct > 0 else 1.0,
+                        flagged=False,
+                    )
+                )
+
+                if flags:
+                    finding = (
+                        f"Equity Flag: The plan falls below the four-fifths (0.80) threshold for {', '.join(flags)} "
+                        f"relative to Fulton County's uninsured distribution (Black 54.2%, Hispanic 8.4%, White 29.0%, Asian 5.4%)."
+                    )
+                else:
+                    b_r = next((r.audit_ratio for r in table if "Black" in r.group), 1.0)
+                    h_r = next((r.audit_ratio for r in table if "Hispanic" in r.group), 1.0)
+                    w_r = next((r.audit_ratio for r in table if "White" in r.group), 1.0)
+                    a_r = next((r.audit_ratio for r in table if "Asian" in r.group), 1.0)
+                    finding = (
+                        f"Plan passes the equity audit across all groups without flags "
+                        f"(Black {b_r:.2f}, Hispanic {h_r:.2f}, White {w_r:.2f}, Asian {a_r:.2f} >= 0.80 benchmark). "
+                        f"Total estimated uninsured served: ~{p_total_est:,}."
+                    )
+
+                structural_hypothesis = (
+                    "Race and ethnicity were strictly firewalled out of the Planner's inputs and scoring formula. "
+                    "Any demographic difference reflects structural co-variation between adult uninsurance, "
+                    "zero-vehicle household prevalence, and distance to adult safety-net care across Fulton County."
+                )
+
+                return AuditEquity(
+                    table=table,
+                    finding=finding,
+                    structural_hypothesis=structural_hypothesis,
+                ).model_dump(mode="json")
+        except Exception:
+            # Fall back to tract_demographics table if v2 query encounters an issue
+            pass
+
+    # Fallback / offline unit-test path using total population
     tract_rows = (
         tract_demo_rows
         if tract_demo_rows is not None
@@ -253,13 +354,14 @@ def equity_audit(
         ("Asian (Non-Hispanic)", "asian_pop"),
     ]
 
-    table: list[EquityGroupComparison] = []
+    table = []
     for label, col in groups:
         p_pop = sum(int(r.get(col) or 0) for r in tract_rows)
         c_pop = int(c_row.get(col) or 0)
         p_pct = round(100.0 * p_pop / plan_total, 1)
         c_pct = round(100.0 * c_pop / county_total, 1)
         diff = round(p_pct - c_pct, 1)
+        ratio = round(p_pct / c_pct, 2) if c_pct > 0 else 1.0
         table.append(
             EquityGroupComparison(
                 group=label,
@@ -268,6 +370,8 @@ def equity_audit(
                 county_population=c_pop,
                 county_share_pct=c_pct,
                 diff_pct_points=diff,
+                audit_ratio=ratio,
+                flagged=(ratio < 0.8),
             )
         )
 
@@ -285,6 +389,8 @@ def equity_audit(
             county_population=c_other,
             county_share_pct=c_other_pct,
             diff_pct_points=round(p_other_pct - c_other_pct, 1),
+            audit_ratio=round(p_other_pct / c_other_pct, 2) if c_other_pct > 0 else 1.0,
+            flagged=False,
         )
     )
 

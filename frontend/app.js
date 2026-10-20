@@ -173,6 +173,28 @@ function renderMapAndPicks() {
 
     listContainer.appendChild(card);
   });
+
+  // Plot special callout pin for Tract 13121011431 (Outreach Trade-off)
+  const pt11431 = projectGeo(33.688, -84.417);
+  const circleSpecial = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circleSpecial.setAttribute('cx', pt11431.x);
+  circleSpecial.setAttribute('cy', pt11431.y);
+  circleSpecial.setAttribute('r', '8');
+  circleSpecial.setAttribute('fill', '#64748b');
+  circleSpecial.setAttribute('stroke', '#ffffff');
+  circleSpecial.setAttribute('stroke-width', '2');
+  circleSpecial.setAttribute('class', 'map-marker-special');
+  picksGroup.appendChild(circleSpecial);
+
+  const labelSpecial = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  labelSpecial.setAttribute('x', pt11431.x);
+  labelSpecial.setAttribute('y', pt11431.y + 3);
+  labelSpecial.setAttribute('text-anchor', 'middle');
+  labelSpecial.setAttribute('fill', '#ffffff');
+  labelSpecial.setAttribute('font-size', '9px');
+  labelSpecial.setAttribute('font-weight', '700');
+  labelSpecial.textContent = '★';
+  picksGroup.appendChild(labelSpecial);
 }
 
 // ---------------------------------------------------------------------------
@@ -225,15 +247,18 @@ function renderEquity() {
   const tableRows = equity.table || [];
   tableRows.forEach(row => {
     const tr = document.createElement('tr');
-    const diff = Number(row.diff_pct_points);
-    const diffClass = diff > 0 ? 'diff-positive' : diff < 0 ? 'diff-negative' : '';
-    const diffSign = diff > 0 ? '+' : '';
+    const ratio = row.audit_ratio !== undefined ? row.audit_ratio : (row.plan_share_pct / (row.county_share_pct || 1));
+    const isFlagged = Boolean(row.flagged) || ratio < 0.80;
+    const statusBadge = isFlagged
+      ? '<span class="badge badge-warning">FLAG (&lt; 0.80)</span>'
+      : '<span class="badge badge-success">PASS (&ge; 0.80)</span>';
 
     tr.innerHTML = `
-      <td>${row.group}</td>
+      <td><strong>${row.group}</strong></td>
       <td><strong>${row.plan_share_pct.toFixed(1)}%</strong></td>
       <td>${row.county_share_pct.toFixed(1)}%</td>
-      <td class="${diffClass}">${diffSign}${diff.toFixed(1)} pp</td>
+      <td><span class="ratio-pill ${ratio >= 0.8 ? 'pass' : 'fail'}">${ratio.toFixed(2)}x</span></td>
+      <td>${statusBadge}</td>
     `;
     tbody.appendChild(tr);
   });

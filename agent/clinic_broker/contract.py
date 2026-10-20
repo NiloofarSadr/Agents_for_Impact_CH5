@@ -62,6 +62,7 @@ class ProblemType(str, Enum):
     BORDER_CLINIC_CLOSER = "BORDER_CLINIC_CLOSER"
     TOO_CLOSE_TOGETHER = "TOO_CLOSE_TOGETHER"
     DATA_GAP = "DATA_GAP"
+    EQUITY_FLAG = "EQUITY_FLAG"
 
 
 class AuditStatus(str, Enum):
@@ -147,6 +148,8 @@ class EquityGroupComparison(BaseModel):
     county_population: int
     county_share_pct: float
     diff_pct_points: float
+    audit_ratio: float | None = None
+    flagged: bool = False
 
 
 class AuditEquity(BaseModel):
