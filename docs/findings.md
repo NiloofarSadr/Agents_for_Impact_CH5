@@ -24,3 +24,12 @@ hours unknown for all 23 FQHCs. In Fulton, opening hours do not change the acces
 only 4 lower-ranked tracts - a real signal. From rank 3 on, each tract's CI overlaps 35-67
 lower-ranked tracts: a statistical tie. Planner rule: overlapping CIs = tied; break ties by
 pct_no_vehicle and >=5 km spacing. Table: a4i_health.places_ci (script: scripts/fetch_places_ci.py).
+
+**School-based clinics (prompted by a teammate's prison question):** USP Atlanta (federal prison)
+is only in shortage_facilities, which we never use for distance: 0 tracts affected. But 9+ safety-net
+sites are School settings that may serve students only. Excluding them:
+- tracts farther from a safety-net site than from any care: 135 (41%) -> 194 (60%)
+- worst distance to a safety-net site: 28.6 km -> 39.8 km
+- tract 13121010214: 8.1 km -> 19.5 km
+Reported as a range (some school clinics serve the community). Plan B and its audit are
+unaffected (no distance term). Table: a4i_health.tract_access_adult (sql/tract_access_adult.sql).
