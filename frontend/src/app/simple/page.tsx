@@ -13,6 +13,7 @@ import {
 } from "@/data/contractData";
 import { FultonMap } from "@/components/FultonMap";
 import { VersionSwitcher } from "@/components/VersionSwitcher";
+import { AskAgentPrompt } from "@/components/AskAgentPrompt";
 import {
   ExplainerKey,
   InfoTrigger,
@@ -517,6 +518,9 @@ export default function SimplifiedCoordinatorPage() {
             </div>
           </div>
         </section>
+
+        {/* INTERACTIVE USER PROMPT: ASK THE AI PLANNING TEAM */}
+        <AskAgentPrompt locale={locale} onSelectRank={setSelectedRank} />
 
         {/* 2. PROMINENT AGENT RECOMMENDATIONS: 4 SATURDAY DEPLOYMENT CARDS */}
         <section className="space-y-4">
