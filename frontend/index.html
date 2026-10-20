@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fulton County Mobile Clinic Van Planner</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <div class="header-icon">🚐</div>
+      <div>
+        <h1>Fulton County Mobile Clinic Van Planner</h1>
+        <p class="subtitle">Challenge 5 (Agents for Impact 2026) • Place-based Planning with Demographic Firewall</p>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="badge badge-success">ADK Workflow: Active</div>
+      <div class="badge badge-info">Firewall: Enforced</div>
+      <button id="btn-load-latest" class="btn btn-secondary">Load Latest Run</button>
+      <button id="btn-load-mock" class="btn btn-outline">Load Mock</button>
+    </div>
+  </header>
+
+  <main class="dashboard-grid">
+    <!-- PANEL 1: Where the Van Goes -->
+    <section class="panel" id="panel-saturdays">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">1</span>
+          <h2>The Four Saturdays</h2>
+        </div>
+        <span class="panel-tag">Ranked Route</span>
+      </div>
+      <p class="panel-desc">Where the mobile van goes on four Saturdays next month, with centroid coordinates and underlying claims.</p>
+
+      <div class="map-container">
+        <svg id="fulton-map" viewBox="0 0 360 480" preserveAspectRatio="xMidYMid meet">
+          <rect width="360" height="480" fill="#f8fafc" rx="8"/>
+          <!-- County outline placeholder -->
+          <path id="fulton-outline" d="M140,40 L260,60 L280,180 L250,300 L210,440 L120,440 L90,260 L110,130 Z" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="2"/>
+          <g id="map-grid" opacity="0.4"></g>
+          <g id="map-centroids"></g>
+          <g id="map-picks"></g>
+        </svg>
+        <div class="map-legend">
+          <span><span class="legend-dot dot-pick"></span> Scheduled Stop</span>
+          <span><span class="legend-dot dot-flagged"></span> Flagged Stop</span>
+          <span><span class="legend-dot dot-other"></span> Census Tract Centroid</span>
+        </div>
+      </div>
+
+      <div id="picks-list" class="cards-list">
+        <!-- Rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- PANEL 2: The Argument -->
+    <section class="panel" id="panel-argument">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">2</span>
+          <h2>The Argument</h2>
+        </div>
+        <span class="panel-tag">Disagreement & Audit</span>
+      </div>
+      <p class="panel-desc">Planner-Auditor revise loop, demographic equity audit, and documented scale limits.</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-timeline">Disagreement Log</button>
+        <button class="tab-btn" data-tab="tab-equity">Demographic Equity</button>
+        <button class="tab-btn" data-tab="tab-limits">Data Limits (<span id="limits-count">6</span>)</button>
+      </div>
+
+      <!-- Tab: Timeline -->
+      <div id="tab-timeline" class="tab-content active">
+        <div class="timeline" id="disagreement-timeline">
+          <!-- Rendered by app.js -->
+        </div>
+      </div>
+
+      <!-- Tab: Equity -->
+      <div id="tab-equity" class="tab-content">
+        <div class="firewall-banner">
+          <span class="lock-icon">🔒</span>
+          <div>
+            <strong>Demographic Firewall Active</strong>
+            <p>Race/ethnicity data lives only in <code>a4i_audit</code>. The Planner never sees demographic tables or equity feedback.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="equity-table">
+            <thead>
+              <tr>
+                <th>Racial / Ethnic Group</th>
+                <th>Plan Pop %</th>
+                <th>County Pop %</th>
+                <th>Diff (pp)</th>
+              </tr>
+            </thead>
+            <tbody id="equity-table-body">
+              <!-- Rendered by app.js -->
+            </tbody>
+          </table>
+        </div>
+        <div class="finding-box" id="equity-finding"></div>
+        <div class="hypothesis-box" id="equity-hypothesis"></div>
+      </div>
+
+      <!-- Tab: Limits -->
+      <div id="tab-limits" class="tab-content">
+        <div id="limits-list" class="cards-list">
+          <!-- Rendered by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3: Neighborhood Flyer -->
+    <section class="panel" id="panel-flyer">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="step-num">3</span>
+          <h2>Neighborhood Outreach</h2>
+        </div>
+        <div class="lang-switch">
+          <button id="btn-lang-en" class="lang-btn active">English</button>
+          <button id="btn-lang-es" class="lang-btn">Español</button>
+        </div>
+      </div>
+      <p class="panel-desc">Plain language flyer, SMS alerts, and runner-up partner notes verified at or below 6th grade.</p>
+
+      <div class="readability-badge">
+        <span class="check-icon">✓</span>
+        <span>Flesch-Kincaid Reading Level: <strong id="reading-grade-val">5.4</strong> (Requirement: ≤ 6.0)</span>
+      </div>
+
+      <div class="outreach-card flyer-card">
+        <div class="card-tag">Printable Community Flyer</div>
+        <pre id="outreach-flyer" class="flyer-text"></pre>
+      </div>
+
+      <div class="outreach-card sms-card">
+        <div class="sms-header">
+          <span class="card-tag">SMS Text Alert</span>
+          <span id="sms-char-count" class="char-count">135 / 160</span>
+        </div>
+        <div id="outreach-sms" class="sms-bubble"></div>
+      </div>
+
+      <div class="outreach-card runner-up-card">
+        <div class="card-tag">Runner-Up Community Partner Note</div>
+        <div id="outreach-runner-up" class="runner-up-text"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,313 @@
+{
+  "county_fips": "13121",
+  "county_name": "Fulton County, GA",
+  "where_the_van_goes": [
+    {
+      "rank": 1,
+      "saturday_index": 1,
+      "tract_id": "13121010214",
+      "score": 0.9412,
+      "flagged": false,
+      "flag_reason": null,
+      "latitude": 33.6621,
+      "longitude": -84.5612,
+      "km_to_safety_net": 8.12,
+      "reasons": [
+        {
+          "claim": "Uninsured prevalence among adults aged 18-64 is 24.1% (modeled PLACES estimate).",
+          "value": 24.1,
+          "unit": "pct",
+          "tract_id": "13121010214",
+          "scale": "tract",
+          "kind": "modeled",
+          "source": "burden_tracts.pct_uninsured"
+        },
+        {
+          "claim": "Straight-line distance to nearest federally recognized safety-net clinic is 8.12 km (upper bound, not travel time).",
+          "value": 8.12,
+          "unit": "km",
+          "tract_id": "13121010214",
+          "scale": "tract",
+          "kind": "computed_upper_bound",
+          "source": "tract_access.km_to_safety_net"
+        },
+        {
+          "claim": "43.2% of households have no vehicle available (99th national percentile).",
+          "value": 43.2,
+          "unit": "pct",
+          "tract_id": "13121010214",
+          "scale": "tract",
+          "kind": "survey",
+          "source": "burden_tracts.pct_no_vehicle"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "saturday_index": 2,
+      "tract_id": "13121010534",
+      "score": 0.8924,
+      "flagged": false,
+      "flag_reason": null,
+      "latitude": 33.5418,
+      "longitude": -84.6085,
+      "km_to_safety_net": 11.45,
+      "reasons": [
+        {
+          "claim": "Uninsured prevalence among adults aged 18-64 is 21.8% (modeled PLACES estimate).",
+          "value": 21.8,
+          "unit": "pct",
+          "tract_id": "13121010534",
+          "scale": "tract",
+          "kind": "modeled",
+          "source": "burden_tracts.pct_uninsured"
+        },
+        {
+          "claim": "Straight-line distance to nearest federally recognized safety-net clinic is 11.45 km (upper bound, not travel time).",
+          "value": 11.45,
+          "unit": "km",
+          "tract_id": "13121010534",
+          "scale": "tract",
+          "kind": "computed_upper_bound",
+          "source": "tract_access.km_to_safety_net"
+        },
+        {
+          "claim": "19.4% of households have no vehicle available (88th national percentile).",
+          "value": 19.4,
+          "unit": "pct",
+          "tract_id": "13121010534",
+          "scale": "tract",
+          "kind": "survey",
+          "source": "burden_tracts.pct_no_vehicle"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "saturday_index": 3,
+      "tract_id": "13121007808",
+      "score": 0.854,
+      "flagged": false,
+      "flag_reason": null,
+      "latitude": 33.7485,
+      "longitude": -84.5102,
+      "km_to_safety_net": 5.84,
+      "reasons": [
+        {
+          "claim": "Uninsured prevalence among adults aged 18-64 is 23.5% (modeled PLACES estimate).",
+          "value": 23.5,
+          "unit": "pct",
+          "tract_id": "13121007808",
+          "scale": "tract",
+          "kind": "modeled",
+          "source": "burden_tracts.pct_uninsured"
+        },
+        {
+          "claim": "Straight-line distance to nearest federally recognized safety-net clinic is 5.84 km (upper bound, not travel time).",
+          "value": 5.84,
+          "unit": "km",
+          "tract_id": "13121007808",
+          "scale": "tract",
+          "kind": "computed_upper_bound",
+          "source": "tract_access.km_to_safety_net"
+        },
+        {
+          "claim": "28.7% of households have no vehicle available (95th national percentile).",
+          "value": 28.7,
+          "unit": "pct",
+          "tract_id": "13121007808",
+          "scale": "tract",
+          "kind": "survey",
+          "source": "burden_tracts.pct_no_vehicle"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "saturday_index": 4,
+      "tract_id": "13121010305",
+      "score": 0.819,
+      "flagged": false,
+      "flag_reason": null,
+      "latitude": 33.6104,
+      "longitude": -84.5219,
+      "km_to_safety_net": 7.65,
+      "reasons": [
+        {
+          "claim": "Uninsured prevalence among adults aged 18-64 is 19.6% (modeled PLACES estimate).",
+          "value": 19.6,
+          "unit": "pct",
+          "tract_id": "13121010305",
+          "scale": "tract",
+          "kind": "modeled",
+          "source": "burden_tracts.pct_uninsured"
+        },
+        {
+          "claim": "Straight-line distance to nearest federally recognized safety-net clinic is 7.65 km (upper bound, not travel time).",
+          "value": 7.65,
+          "unit": "km",
+          "tract_id": "13121010305",
+          "scale": "tract",
+          "kind": "computed_upper_bound",
+          "source": "tract_access.km_to_safety_net"
+        },
+        {
+          "claim": "22.1% of households have no vehicle available (91st national percentile).",
+          "value": 22.1,
+          "unit": "pct",
+          "tract_id": "13121010305",
+          "scale": "tract",
+          "kind": "survey",
+          "source": "burden_tracts.pct_no_vehicle"
+        }
+      ]
+    }
+  ],
+  "what_we_could_not_tell_you": [
+    {
+      "claim": "No transit or road travel-time data is available in license-clean federal sources; all distances are straight-line upper bounds.",
+      "value": null,
+      "unit": null,
+      "tract_id": null,
+      "scale": "tract",
+      "kind": "computed_upper_bound",
+      "source": "tract_access.km_to_safety_net"
+    },
+    {
+      "claim": "Facility layers cover only federally recognized (CMS POS and HRSA BPHC) sites; free or county-run clinics may be closer than reported.",
+      "value": 67,
+      "unit": "sites",
+      "tract_id": null,
+      "scale": "facility_point",
+      "kind": "reported",
+      "source": "care_sites.site_kind"
+    },
+    {
+      "claim": "Respiratory ED visit trends (COVID-19, Influenza, RSV) are reported for the 4-county Atlanta Health Service Area (Clayton, DeKalb, Fulton, Gwinnett), not individual neighborhoods.",
+      "value": 4,
+      "unit": "counties",
+      "tract_id": null,
+      "scale": "hsa_region",
+      "kind": "reported",
+      "source": "disease_weekly.hsa"
+    },
+    {
+      "claim": "PM2.5 air quality in exposure_tracts comes from a 12 km modeling grid interpolated onto census tract IDs (Fulton p90/p10 ratio is 1.05x) and cannot distinguish neighborhoods.",
+      "value": 1.05,
+      "unit": "p90_p10_ratio",
+      "tract_id": null,
+      "scale": "grid_12km",
+      "kind": "modeled",
+      "source": "exposure_tracts.mean_pm"
+    },
+    {
+      "claim": "Fulton County has 0 active federal Health Professional Shortage Area (HPSA) geographic designations because all 99 designations are Proposed For Withdrawal.",
+      "value": 0,
+      "unit": "active_designations",
+      "tract_id": null,
+      "scale": "fed_designation",
+      "kind": "reported",
+      "source": "shortage_areas.HPSA_SCORE"
+    },
+    {
+      "claim": "Disease prevalence figures in CDC PLACES are small-area statistical models (MRP), not patient registries or direct counts, and no 95% confidence intervals are loaded in the snapshot.",
+      "value": null,
+      "unit": null,
+      "tract_id": null,
+      "scale": "tract",
+      "kind": "modeled",
+      "source": "burden_tracts.pct_uninsured"
+    }
+  ],
+  "who_this_plan_lands_on": {
+    "table": [
+      {
+        "group": "Black or African American (Non-Hispanic)",
+        "plan_population": 13840,
+        "plan_share_pct": 81.2,
+        "county_population": 454120,
+        "county_share_pct": 42.6,
+        "diff_pct_points": 38.6
+      },
+      {
+        "group": "White (Non-Hispanic)",
+        "plan_population": 1190,
+        "plan_share_pct": 7.0,
+        "county_population": 412890,
+        "county_share_pct": 38.7,
+        "diff_pct_points": -31.7
+      },
+      {
+        "group": "Hispanic or Latino (Any Race)",
+        "plan_population": 1450,
+        "plan_share_pct": 8.5,
+        "county_population": 84210,
+        "county_share_pct": 7.9,
+        "diff_pct_points": 0.6
+      },
+      {
+        "group": "Asian (Non-Hispanic)",
+        "plan_population": 240,
+        "plan_share_pct": 1.4,
+        "county_population": 81050,
+        "county_share_pct": 7.6,
+        "diff_pct_points": -6.2
+      },
+      {
+        "group": "Other / Two or More Races",
+        "plan_population": 320,
+        "plan_share_pct": 1.9,
+        "county_population": 34440,
+        "county_share_pct": 3.2,
+        "diff_pct_points": -1.3
+      }
+    ],
+    "finding": "The four selected census tracts have a population-weighted Black (Non-Hispanic) share of 81.2% compared to 42.6% across Fulton County overall (+38.6 percentage points), and a Hispanic/Latino share of 8.5% compared to 7.9% countywide.",
+    "structural_hypothesis": "Although race and ethnicity were completely excluded from the Planner's inputs, uninsured rates, zero-vehicle household rates, and safety-net clinic distance gaps in south and southwest Fulton County strongly co-vary with historical residential segregation and uneven safety-net facility siting."
+  },
+  "outreach": {
+    "flyer_en": "FREE MOBILE HEALTH VAN - FULTON COUNTY\n\nNo insurance needed! Everyone is welcome.\n\nWe are coming to your neighborhood on 4 Saturdays next month:\n- Saturday 1: Tract 13121010214\n- Saturday 2: Tract 13121010534\n- Saturday 3: Tract 13121007808\n- Saturday 4: Tract 13121010305\n\nHours: 9:00 AM to 3:00 PM\nCost: $0 (Free)\n\nWhat we offer:\n- Blood pressure checks\n- Blood sugar (glucose) checks\n- Basic health check-ups\n- Help finding a local clinic\n\nWalk up any time. Bring your questions!",
+    "flyer_es": "UNIDAD MOVIL DE SALUD GRATIS - CONDADO DE FULTON\n\n¡No necesita seguro médico! Todos son bienvenidos.\n\nEstaremos en su vecindario durante 4 sábados el próximo mes:\n- Sábado 1: Sector 13121010214\n- Sábado 2: Sector 13121010534\n- Sábado 3: Sector 13121007808\n- Sábado 4: Sector 13121010305\n\nHorario: 9:00 AM a 3:00 PM\nCosto: $0 (Gratis)\n\nServicios que ofrecemos:\n- Revisión de la presión arterial\n- Revisión de azúcar en la sangre (glucosa)\n- Chequeos generales de salud\n- Ayuda para encontrar una clínica cercana\n\n¡Acérquese sin cita!",
+    "sms_en": "Free Fulton Health Van coming to your area on Saturdays 9am-3pm! Free BP, blood sugar & check-ups. No insurance needed. Walk-ins welcome!",
+    "sms_es": "¡Unidad móvil de salud gratis en Fulton los sábados 9am-3pm! Presión, glucosa y chequeos gratis. Sin seguro ni cita previa.",
+    "not_selected_message_en": "We know many families here need care close to home. Because we only have one van for four Saturdays next month, we first visited areas further from low-cost clinics and with fewer cars. You can still visit the van at any stop or call our health department for a free clinic near you.",
+    "not_selected_message_es": "Sabemos que muchas familias aquí necesitan atención cerca de casa. Como solo tenemos una unidad móvil para cuatro sábados este mes, fuimos primero a zonas más lejanas de clínicas gratuitas y con menos autos. Puede visitar la unidad en cualquier parada o llamarnos para encontrar una clínica cercana.",
+    "reading_grade": 5.2
+  },
+  "disagreement_log": [
+    {
+      "round": 1,
+      "draft_version": 1,
+      "draft_picks": [
+        "13121010214",
+        "13121010516",
+        "13121010534",
+        "13121007808"
+      ],
+      "status": "REVISE",
+      "revisions": [
+        {
+          "pick_tract_id": "13121010516",
+          "problem_type": "BORDER_CLINIC_CLOSER",
+          "explanation": "In-county safety-net distance is 6.8 km, but an out-of-county safety-net clinic across the county border in care_sites_state is only 2.1 km away (< 3.0 km threshold).",
+          "suggested_action": "Exclude tract 13121010516 via exclude_tract_ids and re-run score_and_schedule."
+        }
+      ],
+      "resolution_summary": "Auditor rejected Draft v1 due to BORDER_CLINIC_CLOSER on 13121010516."
+    },
+    {
+      "round": 2,
+      "draft_version": 2,
+      "draft_picks": [
+        "13121010214",
+        "13121010534",
+        "13121007808",
+        "13121010305"
+      ],
+      "status": "PASS",
+      "revisions": [],
+      "resolution_summary": "Planner excluded 13121010516 and replaced it with 13121010305. Auditor verified all 4 picks pass border, spacing, and scale checks."
+    }
+  ]
+}
+
