@@ -21,14 +21,14 @@ fi
 # Ensure toolbox binary exists
 if [ ! -f "toolbox" ]; then
   echo "Downloading MCP Toolbox..."
-  curl -fsSL https://storage.googleapis.com/genai-toolbox/toolbox-latest-linux-amd64 -o toolbox
+  curl -fsSL https://storage.googleapis.com/genai-toolbox/v0.32.0/linux/amd64/toolbox -o toolbox
   chmod +x toolbox
 fi
 
 # Check if toolbox is already running
 if ! curl -sf http://127.0.0.1:5000/ready >/dev/null 2>&1; then
   echo "Starting MCP Toolbox on port 5000..."
-  ./toolbox --tools-file agent/toolbox/tools.yaml > /tmp/toolbox.log 2>&1 &
+  ./toolbox --tools-file agent/toolbox/tools.yaml --enable-api > /tmp/toolbox.log 2>&1 &
   sleep 2
 fi
 

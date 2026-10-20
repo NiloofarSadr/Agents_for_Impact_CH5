@@ -98,7 +98,7 @@ def default_fulton_limits() -> list[Claim]:
         Claim(
             claim=(
                 "Clinic operating hours: 5 of 30 health center sites open < 20 hours/week (minimum 4 h); "
-                "47 of 51 safety-net records report 0 weekly hours in HRSA data, and 0 report Saturday hours."
+                "30 of 53 safety-net records report weekly hours (median 40 h/week, 5 under 20 h); hours are unknown for all 23 FQHC records; no Saturday-hours field exists."
             ),
             value=47,
             unit="sites_missing_hours",
@@ -190,7 +190,7 @@ def coerce_plan_draft(raw_draft: Any, fallback_version: int = 1) -> PlanDraft:
         except Exception:
             pass
     # Fallback to deterministic score_and_schedule if LLM returned prose around JSON
-    picks_raw = score_and_schedule(n=4, min_spacing_km=3.0)
+    picks_raw = score_and_schedule(n=4, min_spacing_km=5.0)
     picks = [SitePick.model_validate(p) for p in picks_raw]
     return PlanDraft(
         version=fallback_version,
@@ -336,6 +336,40 @@ def compose_clinic_plan(state: dict[str, Any]) -> dict[str, Any]:
                 ),
             )
         )
+
+    # Equity alternative: Auditor-side search (the Planner never saw race). Rule 3: the human decides.
+    alt = _parse_json_or_obj(state.get("audit_alternative"))
+    eq_flagged = any(getattr(g, "flagged", False) for g in audit_equity.table)
+    if isinstance(alt, dict) and alt.get("found") and eq_flagged:
+        from .tools.scoring import picks_for_tract_ids
+        alt_ids = [str(t).strip().zfill(11) for t in alt.get("tract_ids", [])]
+        alt_picks = picks_for_tract_ids(alt_ids)
+        if alt_picks and len(alt_picks) == len(alt_ids):
+            orig_ids = [p.tract_id for p in final_picks]
+            orig_finding = audit_equity.finding
+            alt_equity = AuditEquity.model_validate(equity_audit(alt_ids))
+            alt_flagged = any(getattr(g, "flagged", False) for g in alt_equity.table)
+            final_picks = alt_picks
+            audit_equity = alt_equity.model_copy(update={"finding": (
+                f"Race-blind Planner draft {orig_ids} was flagged by the Auditor: {orig_finding} "
+                f"The Auditor (the only agent that sees demographics) searched {alt.get('combos_tested')} spaced "
+                f"4-stop sets among the top {alt.get('searched_top_k')} need-ranked tracts and proposes {alt_ids}: "
+                f"{alt_equity.finding} The outreach lead must approve this swap."
+            )})
+            disagreement_log.append(
+                DisagreementEntry(
+                    round=len(disagreement_log) + 1,
+                    draft_version=plan_draft.version,
+                    draft_picks=alt_ids,
+                    status=AuditStatus.REVISE if alt_flagged else AuditStatus.PASS,
+                    revisions=[],
+                    resolution_summary=(
+                        "Equity flag on the race-blind draft cannot be fixed by the Planner. Auditor-proposed "
+                        "alternative " + ("is still flagged" if alt_flagged else "passes the four-fifths audit")
+                        + "; sent to the outreach lead for approval."
+                    ),
+                )
+            )
 
     # Placeholder outreach until Explainer runs next; finalize_plan updates `outreach`
     raw_outreach = _parse_json_or_obj(state.get(STATE_OUTREACH))

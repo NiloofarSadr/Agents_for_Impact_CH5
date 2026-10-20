@@ -427,3 +427,55 @@ def equity_audit(
     )
     return result.model_dump(mode="json")
 
+
+
+def find_equity_passing_set(n: int = 4, min_spacing_km: float = 5.0, top_k: int = 15,
+                            threshold: float = 0.8) -> dict[str, Any]:
+    # AUDITOR-SIDE ONLY (may read demographics; the Planner never calls this).
+    # Search all n-stop sets among the top_k need-ranked tracts, spaced >= min_spacing_km,
+    # and return the highest total-need set whose uninsured-weighted shares pass the
+    # four-fifths rule for every group. Same logic as scripts/pick4.py.
+    import itertools
+    from .scoring import haversine_km
+    rows = call_toolbox_tool("get_need_ranking", {"limit": 100})
+    rows = sorted(rows, key=lambda r: (int(r.get("need_rank", 999999)), -float(r.get("need_score", 0.0))))[:top_k]
+    ids = [str(r["tract_id"]).strip().zfill(11) for r in rows]
+    demo = {str(d["tract_id"]).strip().zfill(11): d
+            for d in call_toolbox_tool("get_tract_demographics", {"tract_ids": ",".join(ids)})}
+    v2 = {r["grp"]: r for r in call_toolbox_tool("get_equity_audit_v2", {"tract_ids": ids[0]})}
+    county = v2.get("county_uninsured", {})
+    keys = {"black": ("black_pop", "pct_black"), "hispanic": ("hispanic_pop", "pct_hispanic"),
+            "white": ("white_pop", "pct_white"), "asian": ("asian_pop", "pct_asian")}
+    cshare = {g: float(county.get(k[1]) or 0.0) / 100.0 for g, k in keys.items()}
+    cand = []
+    for r in rows:
+        tid = str(r["tract_id"]).strip().zfill(11)
+        d = demo.get(tid)
+        if not d or not d.get("total_pop") or r.get("latitude") is None:
+            continue
+        tp = float(d["total_pop"])
+        cand.append({"tid": tid, "lat": float(r["latitude"]), "lon": float(r["longitude"]),
+                     "need": float(r["need_score"]), "w": tp * float(r.get("pct_uninsured") or 0.0) / 100.0,
+                     "s": {g: float(d.get(k[0]) or 0.0) / tp for g, k in keys.items()}})
+    best, tested = None, 0
+    for combo in itertools.combinations(cand, n):
+        if any(haversine_km(x["lat"], x["lon"], y["lat"], y["lon"]) < min_spacing_km
+               for x, y in itertools.combinations(combo, 2)):
+            continue
+        tested += 1
+        W = sum(c["w"] for c in combo)
+        if W <= 0:
+            continue
+        ratios = {g: (sum(c["w"] * c["s"][g] for c in combo) / W) / cshare[g] for g in cshare if cshare[g] > 0}
+        if min(ratios.values()) < threshold:
+            continue
+        need = sum(c["need"] for c in combo)
+        if best is None or need > best[0]:
+            best = (need, combo, ratios)
+    if best is None:
+        return {"found": False, "searched_top_k": top_k, "combos_tested": tested}
+    need, combo, ratios = best
+    ordered = sorted(combo, key=lambda c: -c["need"])
+    return {"found": True, "tract_ids": [c["tid"] for c in ordered], "total_need": round(need, 3),
+            "ratios": {k: round(v, 2) for k, v in ratios.items()},
+            "searched_top_k": top_k, "combos_tested": tested}

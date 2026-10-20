@@ -117,7 +117,7 @@ def _build_reasons_for_row(row: dict[str, Any]) -> list[Claim]:
 
 def score_and_schedule(
     n: int = 4,
-    min_spacing_km: float = 3.0,
+    min_spacing_km: float = 5.0,
     exclude_tract_ids: list[str] | None = None,
     ranking_rows: list[dict[str, Any]] | None = None,
     prefer_audited_passing: bool = True,
@@ -125,9 +125,9 @@ def score_and_schedule(
     """Select `n` Saturday mobile clinic tracts with minimum centroid spacing.
 
     If `ranking_rows` is passed (e.g. synthetic test fixtures), runs greedy spacing selection.
-    If live BigQuery Plan C rows are used and `prefer_audited_passing` is True (or exclusions applied):
-    selects the highest-need spaced combination verified to pass the four-fifths equity audit:
-    Tracts 13121010125 (Sat 1), 13121006900 (Sat 2), 13121011307 (Sat 3), 13121009405 (Sat 4).
+    Race-blind: never reads demographics. Equity alternatives are computed on the Auditor side
+    (tools/audit.py::find_equity_passing_set). `prefer_audited_passing` is kept for API
+    compatibility and ignored.
     """
     excluded = {str(t).strip().zfill(11) for t in (exclude_tract_ids or []) if str(t).strip()}
     is_test_fixture = ranking_rows is not None
@@ -142,39 +142,7 @@ def score_and_schedule(
         ),
     )
 
-    # Check if this is the live Plan C dataset with the verified 4-stop set
-    by_id = {str(r["tract_id"]).strip().zfill(11): r for r in sorted_rows}
-    target_audited = ["13121010125", "13121006900", "13121011307", "13121009405"]
-
-    # When live Plan C is running and audited passing is requested or North Fulton is excluded:
-    if not is_test_fixture and all(t in by_id for t in target_audited) and (prefer_audited_passing or bool(excluded)):
-        selected_rows = [by_id[t] for t in target_audited]
-        selected: list[SitePick] = []
-        for sat_idx, row in enumerate(selected_rows, start=1):
-            tid = str(row["tract_id"]).strip().zfill(11)
-            lat_f = float(row["latitude"]) if row.get("latitude") is not None else None
-            lon_f = float(row["longitude"]) if row.get("longitude") is not None else None
-            safety_net_km = float(
-                row.get("km_to_safety_net_adult")
-                or row.get("safety_net_km")
-                or row.get("km_to_safety_net")
-                or 0.0
-            )
-            pick = SitePick(
-                rank=sat_idx,
-                saturday_index=sat_idx,
-                tract_id=tid,
-                score=round(float(row["need_score"]), 4),
-                reasons=_build_reasons_for_row(row),
-                flagged=False,
-                flag_reason=None,
-                latitude=lat_f,
-                longitude=lon_f,
-                km_to_safety_net=round(safety_net_km, 2),
-            )
-            selected.append(pick)
-        return [p.model_dump(mode="json") for p in selected]
-
+    # Race-blind greedy selection: the Planner never sees demographics.
     # Otherwise standard greedy selection respecting spacing and exclusions
     selected = []
     selected_coords: list[tuple[float, float]] = []
@@ -224,3 +192,23 @@ def score_and_schedule(
 
     return [p.model_dump(mode="json") for p in selected]
 
+
+
+def picks_for_tract_ids(tract_ids: list[str]) -> list[SitePick]:
+    # Build SitePick objects for given tracts from the (race-blind) need ranking.
+    rows = call_toolbox_tool("get_need_ranking", {"limit": 100})
+    by_id = {str(r["tract_id"]).strip().zfill(11): r for r in rows}
+    out: list[SitePick] = []
+    for i, tid in enumerate(tract_ids, start=1):
+        tid = str(tid).strip().zfill(11)
+        row = by_id.get(tid)
+        if not row:
+            continue
+        lat, lon = row.get("latitude"), row.get("longitude")
+        km = float(row.get("km_to_safety_net_adult") or row.get("safety_net_km") or row.get("km_to_safety_net") or 0.0)
+        out.append(SitePick(rank=i, saturday_index=i, tract_id=tid, score=round(float(row["need_score"]), 4),
+                            reasons=_build_reasons_for_row(row), flagged=False, flag_reason=None,
+                            latitude=float(lat) if lat is not None else None,
+                            longitude=float(lon) if lon is not None else None,
+                            km_to_safety_net=round(km, 2)))
+    return out

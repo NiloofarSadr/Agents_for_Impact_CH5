@@ -123,7 +123,7 @@ async def audit_gate(ctx: Context) -> Event:
     tract_ids = [p.tract_id for p in plan_draft.picks]
 
     # Deterministic audit evaluations
-    spacing_res = spacing_check(tract_ids=tract_ids, min_spacing_km=3.0)
+    spacing_res = spacing_check(tract_ids=tract_ids, min_spacing_km=5.0)
     border_res = [remeasure_border(tid) for tid in tract_ids]
     tie_res = tie_check(tract_ids=tract_ids)
     equity_res = equity_audit(tract_ids=tract_ids)
@@ -168,19 +168,20 @@ async def audit_gate(ctx: Context) -> Event:
                 revisions.append(AuditRevision.model_validate(rev_dict))
 
     # 5. Equity audit flags (§3.1 & §3.2)
-    if equity_res.get("has_flags") and revise_round < 1:
+    equity_flagged = any(g.get("flagged") for g in equity_res.get("table", []))
+    if equity_flagged and revise_round < 1:
         flagged_groups = [g["group"] for g in equity_res.get("table", []) if g.get("flagged")]
         revisions.append(
             AuditRevision(
-                pick_tract_id="ALL",
+                pick_tract_id=(tract_ids[0] if tract_ids else "00000000000"),
                 problem_type=ProblemType.EQUITY_FLAG,
                 explanation=(
                     f"Plan draft violates four-fifths equity threshold (< 0.80 benchmark) for: "
                     f"{', '.join(flagged_groups)}. Under-represents county uninsured benchmark distribution."
                 ),
                 suggested_action=(
-                    "Perform combinatorial search over validly spaced sets (>= 5 km) to maximize need "
-                    "subject to equity constraints."
+                    "The race-blind Planner cannot fix an equity flag. The Auditor computes an "
+                    "alternative set (audit_alternative) for the outreach lead to approve."
                 ),
             )
         )
@@ -213,6 +214,14 @@ async def audit_gate(ctx: Context) -> Event:
         }
     )
 
+    audit_alternative = None
+    if any(g.get("flagged") for g in equity_res.get("table", [])):
+        try:
+            from .tools.audit import find_equity_passing_set
+            audit_alternative = find_equity_passing_set(n=max(1, len(tract_ids)), min_spacing_km=5.0)
+        except Exception as exc:  # never block the plan on the search
+            audit_alternative = {"found": False, "error": str(exc)}
+
     updates = {
         STATE_PLAN_DRAFT: plan_draft.model_dump(mode="json"),
         STATE_AUDIT_REVISIONS: [r.model_dump(mode="json") for r in revisions],
@@ -221,6 +230,7 @@ async def audit_gate(ctx: Context) -> Event:
         STATE_REVISE_ROUND: revise_round + 1 if should_revise else revise_round,
         STATE_DRAFT_HISTORY: draft_hist,
         STATE_REVISION_HISTORY: rev_hist,
+        "audit_alternative": audit_alternative,
     }
 
     return Event(route=route_name, state=updates)
@@ -245,12 +255,10 @@ async def finalize_plan(ctx: Context) -> Event:
         flyer_en = (
             "Free Mobile Health Van in Fulton County!\n\n"
             "We are here to help you stay healthy. You do not need health insurance. "
-            "You do not need an ID or any money. All care is 100% free.\n\n"
+            "Ask about costs at the van.\n\n"
             "Saturday Dates and Stops (9 AM to 3 PM):\n"
-            "- Saturday 1: Tract 13121010125 (College Park / Old National)\n"
-            "- Saturday 2: Tract 13121006900 (Center Hill / West Atlanta)\n"
-            "- Saturday 3: Tract 13121011307 (Fairburn / South Fulton)\n"
-            "- Saturday 4: Tract 13121009405 (East Point / Jefferson Park)\n\n"
+            "- See the Clinic Plan for this month's 4 stops\n"
+            "\n"
             "Free Care:\n"
             "- Fast blood pressure checks\n"
             "- Blood sugar checks\n"
@@ -260,13 +268,11 @@ async def finalize_plan(ctx: Context) -> Event:
         )
         flyer_es = (
             "¡Unidad Móvil de Salud Gratuita en el Condado de Fulton!\n\n"
-            "Estamos aquí para ayudarle a cuidar su salud. No necesita seguro médico ni identificación. "
-            "Toda la atención es gratis.\n\n"
+            "Estamos aquí para ayudarle a cuidar su salud. No necesita seguro médico. "
+            "Pregunte por los costos en la camioneta.\n\n"
             "Fechas y Lugares de los Sábados (9 AM a 3 PM):\n"
-            "- Sábado 1: Sector 13121010125 (College Park / Old National)\n"
-            "- Sábado 2: Sector 13121006900 (Center Hill / Asistente en español disponible)\n"
-            "- Sábado 3: Sector 13121011307 (Fairburn / South Fulton)\n"
-            "- Sábado 4: Sector 13121009405 (East Point / Jefferson Park)\n\n"
+            "- Vea el Plan de la Clínica para las 4 paradas de este mes\n"
+            "\n"
             "Servicios Gratuitos:\n"
             "- Chequeos de presión arterial\n"
             "- Pruebas de azúcar en la sangre\n"
@@ -274,17 +280,17 @@ async def finalize_plan(ctx: Context) -> Event:
             "- Ayuda para encontrar clínicas comunitarias cercanas\n\n"
             "Atención sin cita previa de 9 AM a 3 PM. ¡Todos son bienvenidos!"
         )
-        sms_en = "Free Fulton Health Van coming Saturdays 9am-3pm! Free checkups and blood sugar tests. No insurance or ID needed. Walk in anytime!"
-        sms_es = "¡Unidad de Salud gratis en Fulton los sábados 9am-3pm! Chequeos y pruebas gratis. No se necesita seguro ni ID. ¡Los esperamos!"
+        sms_en = "Free Fulton Health Van coming Saturdays 9am-3pm! Free checkups and blood sugar tests. No insurance needed. Walk in anytime!"
+        sms_es = "¡Unidad de Salud gratis en Fulton los sábados 9am-3pm! Chequeos y pruebas gratis. No se necesita seguro. ¡Los esperamos!"
         not_selected_en = (
             "Thank you for your partnership. Your neighborhood had very high need scores and was closely considered "
-            "for this month's 4 Saturday stops. Note on Tract 13121011431: Highest uninsured rate (34.6%), designated "
-            "for next month's first Saturday with dedicated Spanish navigator deployment. Contact outreach@fultoncountyga.gov."
+            "for this month's 4 Saturday stops. Note on Tract 13121011431: Highest uninsured rate (34.6%), flagged "
+            "for the outreach lead to decide on a future stop. Contact your outreach team."
         )
         not_selected_es = (
             "Gracias por su colaboración. Su vecindario tuvo una alta prioridad en la evaluación. "
-            "Nota sobre el Sector 13121011431: Mayor tasa no asegurada (34.6%), programado para el "
-            "primer sábado del próximo mes con navegador bilingüe dedicado. Escríbanos a outreach@fultoncountyga.gov."
+            "Nota sobre el Sector 13121011431: Mayor tasa no asegurada (34.6%), señalado para que el "
+            "equipo de alcance decida una parada futura. Contacte a su equipo de alcance."
         )
         grade_info = readability_check(flyer_en)
         outreach = Outreach(
@@ -356,7 +362,7 @@ async def finalize_plan(ctx: Context) -> Event:
 - Federal Shortage Areas: 0 active designations (all 99 proposed for withdrawal).
 - EPA PM2.5 Grid: 12 km grid resolution (ratio 1.05x across Fulton)—cannot rank tracts.
 - Disease Trends: Multi-county HSA (Clayton, DeKalb, Fulton, Gwinnett)—reported at regional scale.
-- Care Site Hours: 47 of 51 safety-net sites report 0 weekly hours; 0 Saturday hours.
+- Care Site Hours: 30 of 53 safety-net sites report hours (median 40 h/week); hours unknown for all 23 FQHCs; no Saturday-hours data.
 - Distances: Straight-line centroid upper bounds to federal sites, not driving/transit times.
 
 #### Part 3: Who This Plan Lands On (Demographic Equity Audit)
@@ -364,7 +370,7 @@ async def finalize_plan(ctx: Context) -> Event:
 > Note: {clinic_plan.who_this_plan_lands_on.structural_hypothesis}
 
 #### Part 4: Neighborhood Outreach & Reading Grade
-- **Flesch-Kincaid Reading Grade**: {clinic_plan.outreach.reading_grade} (<= 6.0 requirement satisfied)
+- **Flesch-Kincaid Reading Grade**: {clinic_plan.outreach.reading_grade} ({'meets' if clinic_plan.outreach.reading_grade <= 6.0 else 'ABOVE'} the 6th-grade target)
 - Bilingual flyer (EN/ES), SMS alert, and runner-up note generated.
 
 #### Multi-Agent Disagreement & Revision Timeline

@@ -23,7 +23,7 @@ Your job is to gather spatial care access and safety-net clinic capacity evidenc
 
 1. Call `get_tract_access(limit=50)` and `get_site_capacity()`.
 2. Every distance (`km_to_safety_net`, `km_to_any_care`) is the straight-line distance to the nearest federally recognized site (`scale="tract"`, `kind="computed_upper_bound"`). You MUST state that it is an upper bound on straight-line distance to a federally recognized site, NOT travel time or transit time.
-3. Note that only 4 of the 51 federally recognized safety-net clinic records in `care_sites` report non-zero `weekly_hours` (47 of 51 have `weekly_hours = 0`), and we have zero Saturday operating hours data (`limits`).
+3. Note that 30 of the 53 safety-net records (all HRSA Health Center sites) report weekly hours (median 40 h/week, 5 under 20 h); all 23 FQHC records have NO hours data (unknown, not zero); there is no Saturday-hours field (`limits`).
 4. Never reference or request `FQHC_ADMIN_CONTACT_*` columns or any person-level data.
 5. Return a clear summary of the tracts farthest from a federally recognized safety-net site (`km_to_safety_net`), their `pct_no_vehicle`, and the clinic capacity data gap.
 """
