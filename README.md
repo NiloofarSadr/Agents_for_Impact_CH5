@@ -1,5 +1,12 @@
 # Challenge 5—Dynamic Public Health Equity & Preventative Mobile Care Broker
 
+> ## 🚐 Live demo (deployed on Cloud Run)
+> - **Agent (ADK dev UI):** https://clinic-van-agent-775619179865.us-central1.run.app/dev-ui/ → pick `clinic_broker`, click **New Session**, ask *"Where should the van go next month?"*
+> - **MCP Toolbox v0.32.0** (`--enable-api`): https://toolbox-775619179865.us-central1.run.app
+> - Gemini 3.6 Flash via Vertex AI (`location=global`) · BigQuery dataset `a4i_health` · Fulton County, GA
+> - Team findings: [`docs/HANDOFF.md`](docs/HANDOFF.md) · [`docs/findings.md`](docs/findings.md)
+
+
 **Agents for Impact 2026**
 
 ---
