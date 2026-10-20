@@ -304,6 +304,24 @@ async def finalize_plan(ctx: Context) -> Event:
             reading_grade=grade_info["reading_grade"],
         )
 
+    # Remove claims the data does not support (deterministic, after the LLM)
+    import re as _re
+    def _clean(t: str) -> str:
+        subs = [
+            (r"No insurance or (?:ID|identification) (?:is )?needed\.?", "No insurance needed."),
+            (r"No (?:need for )?ID (?:is )?needed\.?\s*", ""),
+            (r"No necesita seguro ni identificaci[oó]n\.?", "No necesita seguro."),
+            (r"No necesita identificaci[oó]n\.?\s*", ""),
+            (r"\b[Ff]ree\s+", ""), (r"\s+gratis\b", ""), (r"\s+gratuit[oa]s?\b", ""),
+            (r"Your (?:area|neighborhood) was almost chosen!?\s*", ""),
+            (r"¡?Su (?:área|vecindario) casi fue elegid[oa]!?\s*", ""),
+        ]
+        for pat, rep in subs:
+            t = _re.sub(pat, rep, t)
+        return t
+    outreach = outreach.model_copy(update={k: _clean(getattr(outreach, k)) for k in
+        ["flyer_en", "flyer_es", "sms_en", "sms_es", "not_selected_message_en", "not_selected_message_es"]})
+
     # Attach outreach to plan_final
     final_plan_raw = state.get(STATE_PLAN_FINAL)
     if isinstance(final_plan_raw, dict):
