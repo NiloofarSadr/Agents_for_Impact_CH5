@@ -33,3 +33,13 @@ sites are School settings that may serve students only. Excluding them:
 - tract 13121010214: 8.1 km -> 19.5 km
 Reported as a range (some school clinics serve the community). Plan B and its audit are
 unaffected (no distance term). Table: a4i_health.tract_access_adult (sql/tract_access_adult.sql).
+
+## Plan C (recommended): need-only score, only tracts >2 km from an adult-accessible safety-net site
+Plan B's top picks sat 0.45-0.83 km from existing clinics, so a van adds little there.
+| Plan (top 30) | Est. uninsured | Black | Hispanic | White | Asian |
+|---|---|---|---|---|---|
+| A distance | 13,513 | 0.53 FLAG | 3.08 | 1.05 | 1.63 |
+| B need only | 15,286 | 0.99 | 2.00 | 0.72 FLAG | 0.83 |
+| C need + van adds access | 17,747 | 1.00 | 2.56 | 0.62 FLAG | 0.50 FLAG |
+Four Saturdays (>=5 km apart): 13121011431, 13121010125, 13121006900, 13121006602.
+Flags go to the outreach lead; Asian group is small, so its ratio is noisy.
