@@ -14,6 +14,7 @@ import {
   MethodType,
 } from "@/data/contractData";
 import { FultonMap } from "@/components/FultonMap";
+import { VersionSwitcher } from "@/components/VersionSwitcher";
 import {
   Globe,
   Sparkles,
@@ -285,6 +286,9 @@ export default function ClinicVanPlannerPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+      {/* Version Switcher Bar so User Can Compare Version A vs Version B */}
+      <VersionSwitcher activeVersion="full" />
+
       {/* Top Civic Agency Strip */}
       <div className="bg-slate-950 text-slate-200 text-xs py-2 px-4 sm:px-8 border-b border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
