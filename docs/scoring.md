@@ -13,3 +13,6 @@ Not used for ranking: PM2.5 (12 km grid, 1.05x spread), disease_weekly (multi-co
 region, latest week Aug 1 2026), race (audit only), shortage_areas (empty in Fulton).
 
 Final 4 stops: chosen by build_plan from the top 30, at least 5 km apart.
+
+UPDATE: default is now Plan C + audited 4-stop search (see docs/HANDOFF.md). Plan B is superseded:
+its top picks were < 1 km from existing clinics.
