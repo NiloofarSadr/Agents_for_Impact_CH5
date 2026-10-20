@@ -185,16 +185,20 @@ export default function ClinicVanPlannerPage() {
     RECOMMENDED_STOPS.find((s) => s.rank === selectedRank) ||
     RECOMMENDED_STOPS[0];
 
-  const handleRunSimulation = () => {
+  const handleRunSimulation = async () => {
     if (isSimulating) return;
     setIsSimulating(true);
     setActivePipelineStep(0);
-    fetchLiveRepoAndBigQuery();
+    // Trigger real backend multi-agent run in parallel with pipeline stepper
+    fetch("/api/run-agent", { method: "POST" })
+      .then(() => fetchLiveRepoAndBigQuery())
+      .catch(() => {});
     [1, 2, 3, 4].forEach((stepIndex, idx) => {
       setTimeout(() => {
         setActivePipelineStep(stepIndex);
         if (stepIndex === 4) {
           setIsSimulating(false);
+          fetchLiveRepoAndBigQuery();
         }
       }, (idx + 1) * 650);
     });
