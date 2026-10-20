@@ -18,7 +18,11 @@ export const metadata: Metadata = {
     "Multi-Agent Street-Level Mobile Clinic Dispatch, Self-Correction Audit & Multi-Lingual Outreach Workspace (FIPS 13121)",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"

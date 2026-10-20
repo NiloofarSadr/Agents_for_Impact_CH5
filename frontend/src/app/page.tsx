@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Locale,
   UI_STRINGS,
@@ -50,39 +50,87 @@ const PIPELINE_STEPS = [
     id: "scouts",
     name: "3 Scouts (Parallel)",
     keyWritten: "ev_burden, ev_access, ev_context",
-    ruleNote: "No race columns queried",
+    ruleNote: "BigQuery a4i_health · No race columns",
   },
   {
     id: "planner_v1",
-    name: "Planner (Draft v1)",
+    name: "Plan A & B Rejected",
     keyWritten: "plan_draft (v1)",
-    ruleNote: "Picked 13121007808 (#3)",
+    ruleNote: "Plan A Black=0.53 FLAG; Plan B 0.45km from clinic",
   },
   {
     id: "auditor_v1",
-    name: "Auditor (Method Check)",
+    name: "Greedy Plan C Rejected",
     keyWritten: "audit_revisions",
-    ruleNote: "Rejected #3 (0.9km border clinic)",
+    ruleNote: "11431+06602 gave Black=0.45 FLAG",
   },
   {
     id: "planner_v2",
-    name: "Planner (Revise Loop)",
+    name: "Exhaustive Search (623 Sets)",
     keyWritten: "plan_draft (v2)",
-    ruleNote: "Swapped to 13121011306",
+    ruleNote: "10125, 06900, 11307, 09405 (Need 9.16)",
   },
   {
     id: "auditor_eq",
     name: "Auditor + Composer + Explainer",
     keyWritten: "audit_equity, outreach",
-    ruleNote: "Equity -> Human; Flyer -> EN/ES/VI",
+    ruleNote: "Zero flags (1.02/0.81/0.88/1.04) · EN/ES/VI",
   },
 ];
+
+interface LiveBigQueryPayload {
+  ok: boolean;
+  projectId?: string;
+  dataset?: string;
+  queriedAt?: string;
+  latencyMs?: number;
+  final4Tracts?: string[];
+  planCTop30?: Array<Record<string, unknown>>;
+  scoutBurden?: Array<Record<string, unknown>>;
+  scoutAccess?: Array<Record<string, unknown>>;
+  scoutAir?: Record<string, unknown> | null;
+  scoutDiseaseLatest?: Record<string, unknown> | null;
+  auditDemographics?: Array<Record<string, unknown>>;
+  equityRatios?: {
+    black: number;
+    hispanic: number;
+    white: number;
+    asian: number;
+  } | null;
+  error?: string;
+}
+
+interface LiveRepoSyncPayload {
+  ok: boolean;
+  repoRoot?: string;
+  syncedAt?: string;
+  git?: {
+    branch: string;
+    lastCommit: {
+      hash: string;
+      subject: string;
+      date: string;
+      author: string;
+    };
+    remoteUrl: string;
+  };
+  docs?: {
+    handoffMd: string;
+    findingsMd: string;
+    scoringMd: string;
+  };
+  sqlFiles?: Record<string, string>;
+  error?: string;
+}
 
 export default function ClinicVanPlannerPage() {
   const [locale, setLocale] = useState<Locale>("en");
   const [selectedRank, setSelectedRank] = useState<number>(1);
   const [showRejectedPin, setShowRejectedPin] = useState<boolean>(true);
   const [showWhiteboard, setShowWhiteboard] = useState<boolean>(false);
+  const [inspectorTab, setInspectorTab] = useState<
+    "bigquery" | "repo" | "whiteboard"
+  >("bigquery");
   const [flyerLangMode, setFlyerLangMode] = useState<"active" | "bilingual">(
     "bilingual"
   );
@@ -90,6 +138,11 @@ export default function ClinicVanPlannerPage() {
   const [eventFilter, setEventFilter] = useState<
     "all" | "selected" | "critical" | "opportunity"
   >("selected");
+
+  // Live Repo & BigQuery connection state
+  const [liveBq, setLiveBq] = useState<LiveBigQueryPayload | null>(null);
+  const [liveRepo, setLiveRepo] = useState<LiveRepoSyncPayload | null>(null);
+  const [isFetchingLive, setIsFetchingLive] = useState<boolean>(false);
 
   // Pipeline simulation state
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -103,6 +156,30 @@ export default function ClinicVanPlannerPage() {
     "adv-4a": true,
   });
 
+  const fetchLiveRepoAndBigQuery = useCallback(async () => {
+    setIsFetchingLive(true);
+    try {
+      const [repoRes, bqRes] = await Promise.all([
+        fetch("/api/repo-sync", { cache: "no-store" }),
+        fetch("/api/bigquery", { cache: "no-store" }),
+      ]);
+      const [repoJson, bqJson] = await Promise.all([
+        repoRes.json(),
+        bqRes.json(),
+      ]);
+      setLiveRepo(repoJson);
+      setLiveBq(bqJson);
+    } catch (err) {
+      console.error("Live sync error:", err);
+    } finally {
+      setIsFetchingLive(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLiveRepoAndBigQuery();
+  }, [fetchLiveRepoAndBigQuery]);
+
   const t = UI_STRINGS[locale];
   const activeStop =
     RECOMMENDED_STOPS.find((s) => s.rank === selectedRank) ||
@@ -112,6 +189,7 @@ export default function ClinicVanPlannerPage() {
     if (isSimulating) return;
     setIsSimulating(true);
     setActivePipelineStep(0);
+    fetchLiveRepoAndBigQuery();
     [1, 2, 3, 4].forEach((stepIndex, idx) => {
       setTimeout(() => {
         setActivePipelineStep(stepIndex);
@@ -214,8 +292,39 @@ export default function ClinicVanPlannerPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>{t.govBanner}</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-400">
-            <span className="hidden md:inline">{t.coordinatorRole}</span>
+          <div className="flex flex-wrap items-center gap-3 text-slate-400">
+            <button
+              type="button"
+              onClick={() => {
+                setInspectorTab("bigquery");
+                setShowWhiteboard(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 hover:bg-emerald-900/80 transition cursor-pointer"
+            >
+              <Database className="w-3 h-3 text-emerald-400" />
+              {isFetchingLive
+                ? "Querying BigQuery a4i_health..."
+                : liveBq?.ok
+                ? `LIVE BigQuery (${liveBq.projectId}.a4i_health · ${liveBq.latencyMs}ms)`
+                : "BigQuery Snapshot Ready"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setInspectorTab("repo");
+                setShowWhiteboard(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-sky-950/90 text-sky-300 border border-sky-700/60 hover:bg-sky-900/80 transition cursor-pointer"
+            >
+              <Terminal className="w-3 h-3 text-sky-400" />
+              {liveRepo?.ok && liveRepo.git
+                ? `Repo: ${liveRepo.git.branch}@${liveRepo.git.lastCommit.hash} (HANDOFF.md + ${
+                    Object.keys(liveRepo.sqlFiles || {}).length
+                  } SQL)`
+                : "Repo: Agents_for_Impact_CH5"}
+            </button>
+
             <span className="text-teal-400 font-mono font-semibold">
               {t.countyLabel}
             </span>
@@ -236,7 +345,7 @@ export default function ClinicVanPlannerPage() {
                   {t.appTitle}
                 </h1>
                 <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-                  Google ADK · 5-Agent Verified
+                  Google ADK · Live BigQuery + Repo Synced
                 </span>
               </div>
               <p className="text-xs text-slate-500">{t.appSubtitle}</p>
@@ -280,7 +389,11 @@ export default function ClinicVanPlannerPage() {
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition cursor-pointer shadow-xs"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 ${isSimulating ? "animate-spin text-teal-400" : "text-teal-400"}`}
+                className={`w-3.5 h-3.5 ${
+                  isSimulating || isFetchingLive
+                    ? "animate-spin text-teal-400"
+                    : "text-teal-400"
+                }`}
               />
               {isSimulating ? t.runningPipelineBtn : t.runPipelineBtn}
             </button>
@@ -308,28 +421,112 @@ export default function ClinicVanPlannerPage() {
           </div>
         </div>
 
-        {/* Collapsible `session.state` Shared Whiteboard Drawer */}
+        {/* Collapsible Live BigQuery + Git Repo + `session.state` Drawer */}
         {showWhiteboard && (
           <div className="bg-slate-900 text-slate-100 border-t border-slate-800 px-4 sm:px-8 py-4">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-teal-400" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-teal-300">
-                    {t.whiteboardTitle}
-                  </span>
+            <div className="max-w-7xl mx-auto space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setInspectorTab("bigquery")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      inspectorTab === "bigquery"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    1. Live BigQuery (`a4i_health` SQL Output)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInspectorTab("repo")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      inspectorTab === "repo"
+                        ? "bg-sky-600 text-white"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    2. Live Repo Files (`docs/HANDOFF.md` & `sql/*.sql`)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInspectorTab("whiteboard")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      inspectorTab === "whiteboard"
+                        ? "bg-teal-600 text-white"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    <Terminal className="w-3.5 h-3.5" />
+                    3. ADK `session.state` Contract
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowWhiteboard(false)}
-                  className="text-xs text-slate-400 hover:text-white cursor-pointer"
-                >
-                  Close ✕
-                </button>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={fetchLiveRepoAndBigQuery}
+                    className="text-xs text-teal-300 hover:text-teal-200 font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${
+                        isFetchingLive ? "animate-spin" : ""
+                      }`}
+                    />
+                    Re-query BigQuery & Repo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowWhiteboard(false)}
+                    className="text-xs text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    Close ✕
+                  </button>
+                </div>
               </div>
-              <pre className="text-[11px] font-mono bg-slate-950 p-3.5 rounded-xl border border-slate-800 overflow-x-auto max-h-60 text-emerald-300">
-                {JSON.stringify(SESSION_STATE_SNAPSHOT, null, 2)}
-              </pre>
+
+              {inspectorTab === "bigquery" && (
+                <pre className="text-[11px] font-mono bg-slate-950 p-3.5 rounded-xl border border-slate-800 overflow-x-auto max-h-72 text-emerald-300">
+                  {JSON.stringify(
+                    liveBq || { status: "Loading live BigQuery results..." },
+                    null,
+                    2
+                  )}
+                </pre>
+              )}
+
+              {inspectorTab === "repo" && (
+                <pre className="text-[11px] font-mono bg-slate-950 p-3.5 rounded-xl border border-slate-800 overflow-x-auto max-h-72 text-sky-300">
+                  {JSON.stringify(
+                    liveRepo || { status: "Loading repo files..." },
+                    null,
+                    2
+                  )}
+                </pre>
+              )}
+
+              {inspectorTab === "whiteboard" && (
+                <pre className="text-[11px] font-mono bg-slate-950 p-3.5 rounded-xl border border-slate-800 overflow-x-auto max-h-72 text-amber-300">
+                  {JSON.stringify(
+                    {
+                      ...SESSION_STATE_SNAPSHOT,
+                      _liveBigQuerySync: liveBq
+                        ? {
+                            projectId: liveBq.projectId,
+                            queriedAt: liveBq.queriedAt,
+                            latencyMs: liveBq.latencyMs,
+                            liveEquityRatios: liveBq.equityRatios,
+                          }
+                        : null,
+                    },
+                    null,
+                    2
+                  )}
+                </pre>
+              )}
             </div>
           </div>
         )}
