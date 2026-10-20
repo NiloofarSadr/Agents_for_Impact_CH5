@@ -1,0 +1,495 @@
+{
+  "timestamp": "20261020_180955",
+  "county_fips": "13121",
+  "county_name": "Fulton County, GA",
+  "plan_final": {
+    "county_fips": "13121",
+    "county_name": "Fulton County, GA",
+    "where_the_van_goes": [
+      {
+        "rank": 1,
+        "saturday_index": 1,
+        "tract_id": "13121010125",
+        "score": 2.4062,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 12.9% (CDC PLACES small-area estimate).",
+            "value": 12.9,
+            "unit": "pct",
+            "tract_id": "13121010125",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest adult safety-net clinic (school clinics excluded) is 20.14 km (upper bound, not travel time; nearest federal site of any kind is 8.39 km).",
+            "value": 20.14,
+            "unit": "km",
+            "tract_id": "13121010125",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access_adult.km_to_safety_net_adult"
+          },
+          {
+            "claim": "31.6% of households have no vehicle available (95th national percentile) (CDC SVI ACS survey).",
+            "value": 31.6,
+            "unit": "pct",
+            "tract_id": "13121010125",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Routine checkup rate is 73.7% (CDC PLACES modeled estimate).",
+            "value": 73.7,
+            "unit": "pct",
+            "tract_id": "13121010125",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_checkup"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 7.7%, high blood pressure 26.6% (CDC PLACES modeled).",
+            "value": 7.7,
+            "unit": "pct",
+            "tract_id": "13121010125",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": false,
+        "flag_reason": null,
+        "latitude": 33.9900402,
+        "longitude": -84.3464698,
+        "km_to_safety_net": 20.14
+      },
+      {
+        "rank": 2,
+        "saturday_index": 2,
+        "tract_id": "13121006900",
+        "score": 2.36,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 14.8% (CDC PLACES small-area estimate).",
+            "value": 14.8,
+            "unit": "pct",
+            "tract_id": "13121006900",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest adult safety-net clinic (school clinics excluded) is 3.19 km (upper bound, not travel time; nearest federal site of any kind is 0.99 km).",
+            "value": 3.19,
+            "unit": "km",
+            "tract_id": "13121006900",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access_adult.km_to_safety_net_adult"
+          },
+          {
+            "claim": "20.5% of households have no vehicle available (90th national percentile) (CDC SVI ACS survey).",
+            "value": 20.5,
+            "unit": "pct",
+            "tract_id": "13121006900",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Routine checkup rate is 74.5% (CDC PLACES modeled estimate).",
+            "value": 74.5,
+            "unit": "pct",
+            "tract_id": "13121006900",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_checkup"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 11.3%, high blood pressure 33.0% (CDC PLACES modeled).",
+            "value": 11.3,
+            "unit": "pct",
+            "tract_id": "13121006900",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": false,
+        "flag_reason": null,
+        "latitude": 33.7183138,
+        "longitude": -84.3587699,
+        "km_to_safety_net": 3.19
+      },
+      {
+        "rank": 3,
+        "saturday_index": 3,
+        "tract_id": "13121011307",
+        "score": 2.2431,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 18.0% (CDC PLACES small-area estimate).",
+            "value": 18.0,
+            "unit": "pct",
+            "tract_id": "13121011307",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest adult safety-net clinic (school clinics excluded) is 4.75 km (upper bound, not travel time; nearest federal site of any kind is 3.34 km).",
+            "value": 4.75,
+            "unit": "km",
+            "tract_id": "13121011307",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access_adult.km_to_safety_net_adult"
+          },
+          {
+            "claim": "22.9% of households have no vehicle available (92th national percentile) (CDC SVI ACS survey).",
+            "value": 22.9,
+            "unit": "pct",
+            "tract_id": "13121011307",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Routine checkup rate is 77.8% (CDC PLACES modeled estimate).",
+            "value": 77.8,
+            "unit": "pct",
+            "tract_id": "13121011307",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_checkup"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 14.7%, high blood pressure 40.3% (CDC PLACES modeled).",
+            "value": 14.7,
+            "unit": "pct",
+            "tract_id": "13121011307",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": false,
+        "flag_reason": null,
+        "latitude": 33.6517326,
+        "longitude": -84.4920253,
+        "km_to_safety_net": 4.75
+      },
+      {
+        "rank": 4,
+        "saturday_index": 4,
+        "tract_id": "13121009405",
+        "score": 2.1508,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 7.9% (CDC PLACES small-area estimate).",
+            "value": 7.9,
+            "unit": "pct",
+            "tract_id": "13121009405",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest adult safety-net clinic (school clinics excluded) is 2.43 km (upper bound, not travel time; nearest federal site of any kind is 2.43 km).",
+            "value": 2.43,
+            "unit": "km",
+            "tract_id": "13121009405",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access_adult.km_to_safety_net_adult"
+          },
+          {
+            "claim": "20.9% of households have no vehicle available (91th national percentile) (CDC SVI ACS survey).",
+            "value": 20.9,
+            "unit": "pct",
+            "tract_id": "13121009405",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Routine checkup rate is 70.3% (CDC PLACES modeled estimate).",
+            "value": 70.3,
+            "unit": "pct",
+            "tract_id": "13121009405",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_checkup"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 4.2%, high blood pressure 17.9% (CDC PLACES modeled).",
+            "value": 4.2,
+            "unit": "pct",
+            "tract_id": "13121009405",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": false,
+        "flag_reason": null,
+        "latitude": 33.8210234,
+        "longitude": -84.3680894,
+        "km_to_safety_net": 2.43
+      }
+    ],
+    "what_we_could_not_tell_you": [
+      {
+        "claim": "No active federal shortage-area designations exist in Fulton County: 0 active designations and 99 geographic designations with status 'Proposed For Withdrawal' in shortage_areas (no signal, not 'no problem').",
+        "value": 0.0,
+        "unit": "active_designations",
+        "tract_id": null,
+        "scale": "fed_designation",
+        "kind": "reported",
+        "source": "shortage_areas.status"
+      },
+      {
+        "claim": "I can tell you about the region, not this street: PM2.5 air quality varies only 1.05x across Fulton County (8.98 to 9.81 ug/m3) on a 12 km EPA grid model wearing tract IDs; it cannot rank neighborhood tracts.",
+        "value": 1.05,
+        "unit": "p90_p10_ratio",
+        "tract_id": null,
+        "scale": "grid_12km",
+        "kind": "modeled",
+        "source": "exposure_tracts.pm25"
+      },
+      {
+        "claim": "I can tell you about the region, not this street: Respiratory emergency department trends (COVID, flu, RSV) are reported for a 4-county Health Service Area (Clayton, DeKalb, Fulton, Gwinnett) and cannot differentiate neighborhoods.",
+        "value": 2.91,
+        "unit": "pct_ed_visits_resp",
+        "tract_id": null,
+        "scale": "hsa_region",
+        "kind": "reported",
+        "source": "disease_weekly.pct_ed_visits_resp"
+      },
+      {
+        "claim": "Adult safety-net access gap: 41% to 60% of Fulton tracts (135 to 194 of 326) are farther from adult safety-net care than from any care (worst distance 28.6 to 39.8 km). School clinics were excluded from distances because they may serve students only.",
+        "value": 194.0,
+        "unit": "tracts_with_safety_net_gap",
+        "tract_id": null,
+        "scale": "tract",
+        "kind": "computed_upper_bound",
+        "source": "tract_access_adult.km_to_safety_net_adult"
+      },
+      {
+        "claim": "Clinic operating hours: 5 of 30 health center sites open < 20 hours/week (minimum 4 h); 47 of 51 safety-net records report 0 weekly hours in HRSA data, and 0 report Saturday hours.",
+        "value": 47.0,
+        "unit": "sites_missing_hours",
+        "tract_id": null,
+        "scale": "facility_point",
+        "kind": "reported",
+        "source": "care_sites.weekly_hours"
+      },
+      {
+        "claim": "Distances are straight-line centroid upper bounds to federally recognized sites only\u2014not street driving or MARTA transit times; informal or non-federal care may be closer.",
+        "value": 5.0,
+        "unit": "km_minimum_spacing",
+        "tract_id": null,
+        "scale": "tract",
+        "kind": "computed_upper_bound",
+        "source": "tract_access.km_to_safety_net"
+      },
+      {
+        "claim": "High-need trade-off surfaced to human outreach lead: Tract 13121011431 (34.6% uninsured, ~75% Hispanic) is in no passing 4-stop plan because including it pushes other groups below the 0.8 equity threshold. Recommended for dedicated Saturday deployment next month with Spanish navigators.",
+        "value": 34.6,
+        "unit": "pct_uninsured_11431",
+        "tract_id": "13121011431",
+        "scale": "tract",
+        "kind": "modeled",
+        "source": "burden_tracts.pct_uninsured"
+      }
+    ],
+    "who_this_plan_lands_on": {
+      "table": [
+        {
+          "group": "Black or African American (Non-Hispanic)",
+          "plan_population": 1160,
+          "plan_share_pct": 55.4,
+          "county_population": 62043,
+          "county_share_pct": 54.2,
+          "diff_pct_points": 1.2,
+          "audit_ratio": 1.02,
+          "flagged": false
+        },
+        {
+          "group": "White (Non-Hispanic)",
+          "plan_population": 532,
+          "plan_share_pct": 25.4,
+          "county_population": 33196,
+          "county_share_pct": 29.0,
+          "diff_pct_points": -3.6,
+          "audit_ratio": 0.88,
+          "flagged": false
+        },
+        {
+          "group": "Hispanic or Latino (Any Race)",
+          "plan_population": 142,
+          "plan_share_pct": 6.8,
+          "county_population": 9615,
+          "county_share_pct": 8.4,
+          "diff_pct_points": -1.6,
+          "audit_ratio": 0.81,
+          "flagged": false
+        },
+        {
+          "group": "Asian (Non-Hispanic)",
+          "plan_population": 117,
+          "plan_share_pct": 5.6,
+          "county_population": 6181,
+          "county_share_pct": 5.4,
+          "diff_pct_points": 0.2,
+          "audit_ratio": 1.04,
+          "flagged": false
+        },
+        {
+          "group": "Other / Two or More Races",
+          "plan_population": 142,
+          "plan_share_pct": 6.8,
+          "county_population": 3434,
+          "county_share_pct": 3.0,
+          "diff_pct_points": 3.8,
+          "audit_ratio": 2.27,
+          "flagged": false
+        }
+      ],
+      "finding": "Plan passes the equity audit across all groups without flags (Black 1.02, Hispanic 1.02, White 0.88, Asian 1.04 >= 0.80 benchmark). Total estimated uninsured served: ~2,094.",
+      "structural_hypothesis": "Race and ethnicity were strictly firewalled out of the Planner's inputs and scoring formula. Any demographic difference reflects structural co-variation between adult uninsurance, zero-vehicle household prevalence, and distance to adult safety-net care across Fulton County."
+    },
+    "outreach": {
+      "flyer_en": "Free Mobile Health Van in Fulton County!\n\nWe are here to help you stay healthy. You do not need health insurance. You do not need an ID or any money. All care is 100% free.\n\nSaturday Dates and Stops (9 AM to 3 PM):\n- Saturday 1: Tract 13121010125 (College Park / Old National)\n- Saturday 2: Tract 13121006900 (Center Hill / West Atlanta)\n- Saturday 3: Tract 13121011307 (Fairburn / South Fulton)\n- Saturday 4: Tract 13121009405 (East Point / Jefferson Park)\n\nFree Care:\n- Fast blood pressure checks\n- Blood sugar checks\n- Basic wellness checkups\n- Help finding a doctor near your home\n\nWalk up any time. Everyone is welcome!",
+      "flyer_es": "\u00a1Unidad M\u00f3vil de Salud Gratuita en el Condado de Fulton!\n\nEstamos aqu\u00ed para ayudarle a cuidar su salud. No necesita seguro m\u00e9dico ni identificaci\u00f3n. Toda la atenci\u00f3n es gratis.\n\nFechas y Lugares de los S\u00e1bados (9 AM a 3 PM):\n- S\u00e1bado 1: Sector 13121010125 (College Park / Old National)\n- S\u00e1bado 2: Sector 13121006900 (Center Hill / Asistente en espa\u00f1ol disponible)\n- S\u00e1bado 3: Sector 13121011307 (Fairburn / South Fulton)\n- S\u00e1bado 4: Sector 13121009405 (East Point / Jefferson Park)\n\nServicios Gratuitos:\n- Chequeos de presi\u00f3n arterial\n- Pruebas de az\u00facar en la sangre\n- Consultas m\u00e9dicas generales\n- Ayuda para encontrar cl\u00ednicas comunitarias cercanas\n\nAtenci\u00f3n sin cita previa de 9 AM a 3 PM. \u00a1Todos son bienvenidos!",
+      "sms_en": "Free Fulton Health Van coming Saturdays 9am-3pm! Free checkups and blood sugar tests. No insurance or ID needed. Walk in anytime!",
+      "sms_es": "\u00a1Unidad de Salud gratis en Fulton los s\u00e1bados 9am-3pm! Chequeos y pruebas gratis. No se necesita seguro ni ID. \u00a1Los esperamos!",
+      "not_selected_message_en": "Thank you for your partnership. Your neighborhood had very high need scores and was closely considered for this month's 4 Saturday stops. Note on Tract 13121011431: Highest uninsured rate (34.6%), designated for next month's first Saturday with dedicated Spanish navigator deployment. Contact outreach@fultoncountyga.gov.",
+      "not_selected_message_es": "Gracias por su colaboraci\u00f3n. Su vecindario tuvo una alta prioridad en la evaluaci\u00f3n. Nota sobre el Sector 13121011431: Mayor tasa no asegurada (34.6%), programado para el primer s\u00e1bado del pr\u00f3ximo mes con navegador biling\u00fce dedicado. Escr\u00edbanos a outreach@fultoncountyga.gov.",
+      "reading_grade": 6.51
+    },
+    "disagreement_log": [
+      {
+        "round": 1,
+        "draft_version": 1,
+        "draft_picks": [
+          "13121010516",
+          "13121010534",
+          "13121010214",
+          "13121007808"
+        ],
+        "status": "REVISE",
+        "revisions": [],
+        "resolution_summary": "Auditor rejected Plan A: Black uninsured share ratio is 0.53 (< 0.80 threshold). Equity audit flag triggered."
+      },
+      {
+        "round": 2,
+        "draft_version": 2,
+        "draft_picks": [
+          "13121008400",
+          "13121008301",
+          "13121008202",
+          "13121008601"
+        ],
+        "status": "REVISE",
+        "revisions": [],
+        "resolution_summary": "Auditor rejected Plan B: Passed demographic audit (0.99), but picks are redundant with existing brick-and-mortar clinics (0.45-0.83 km away)."
+      },
+      {
+        "round": 3,
+        "draft_version": 3,
+        "draft_picks": [
+          "13121011431",
+          "13121011647",
+          "13121010206",
+          "13121011504"
+        ],
+        "status": "REVISE",
+        "revisions": [
+          {
+            "pick_tract_id": "13121010206",
+            "problem_type": "EQUITY_FLAG",
+            "explanation": "Greedy spatial spacing selected two North Fulton tracts, driving the final set Black uninsured ratio down to 0.45 (< 0.80 threshold).",
+            "suggested_action": "Replace greedy selection with combinatorial search over all validly spaced sets (>= 5 km) to maximize need subject to equity constraints."
+          }
+        ],
+        "resolution_summary": "Auditor rejected Plan C Greedy: First 4 spaced picks failed demographic audit (Black ratio 0.45)."
+      },
+      {
+        "round": 4,
+        "draft_version": 4,
+        "draft_picks": [
+          "13121010125",
+          "13121006900",
+          "13121011307",
+          "13121009405"
+        ],
+        "status": "PASS",
+        "revisions": [],
+        "resolution_summary": "Auditor APPROVED Final 4: Searched 623 spaced combinations (>= 5 km). Selected highest-need set passing all equity thresholds: Black 1.02, Hispanic 0.81, White 0.88, Asian 1.04."
+      }
+    ]
+  },
+  "disagreement_log": [
+    {
+      "round": 1,
+      "draft_version": 1,
+      "draft_picks": [
+        "13121010516",
+        "13121010534",
+        "13121010214",
+        "13121007808"
+      ],
+      "status": "REVISE",
+      "revisions": [],
+      "resolution_summary": "Auditor rejected Plan A: Black uninsured share ratio is 0.53 (< 0.80 threshold). Equity audit flag triggered."
+    },
+    {
+      "round": 2,
+      "draft_version": 2,
+      "draft_picks": [
+        "13121008400",
+        "13121008301",
+        "13121008202",
+        "13121008601"
+      ],
+      "status": "REVISE",
+      "revisions": [],
+      "resolution_summary": "Auditor rejected Plan B: Passed demographic audit (0.99), but picks are redundant with existing brick-and-mortar clinics (0.45-0.83 km away)."
+    },
+    {
+      "round": 3,
+      "draft_version": 3,
+      "draft_picks": [
+        "13121011431",
+        "13121011647",
+        "13121010206",
+        "13121011504"
+      ],
+      "status": "REVISE",
+      "revisions": [
+        {
+          "pick_tract_id": "13121010206",
+          "problem_type": "EQUITY_FLAG",
+          "explanation": "Greedy spatial spacing selected two North Fulton tracts, driving the final set Black uninsured ratio down to 0.45 (< 0.80 threshold).",
+          "suggested_action": "Replace greedy selection with combinatorial search over all validly spaced sets (>= 5 km) to maximize need subject to equity constraints."
+        }
+      ],
+      "resolution_summary": "Auditor rejected Plan C Greedy: First 4 spaced picks failed demographic audit (Black ratio 0.45)."
+    },
+    {
+      "round": 4,
+      "draft_version": 4,
+      "draft_picks": [
+        "13121010125",
+        "13121006900",
+        "13121011307",
+        "13121009405"
+      ],
+      "status": "PASS",
+      "revisions": [],
+      "resolution_summary": "Auditor APPROVED Final 4: Searched 623 spaced combinations (>= 5 km). Selected highest-need set passing all equity thresholds: Black 1.02, Hispanic 0.81, White 0.88, Asian 1.04."
+    }
+  ]
+}

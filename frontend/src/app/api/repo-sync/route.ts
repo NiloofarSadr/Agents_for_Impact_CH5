@@ -62,12 +62,21 @@ export async function GET() {
       }
     };
 
-    const [handoffMd, findingsMd, scoringMd, contractPy] = await Promise.all([
-      readSafe("docs/HANDOFF.md"),
-      readSafe("docs/findings.md"),
-      readSafe("docs/scoring.md"),
-      readSafe("agent/contract.py"),
-    ]);
+    const [handoffMd, findingsMd, scoringMd, contractPy, latestRunRaw] =
+      await Promise.all([
+        readSafe("docs/HANDOFF.md"),
+        readSafe("docs/findings.md"),
+        readSafe("docs/scoring.md"),
+        readSafe("agent/contract.py"),
+        readSafe("runs/latest.json"),
+      ]);
+
+    let latestRun = null;
+    try {
+      if (latestRunRaw) latestRun = JSON.parse(latestRunRaw);
+    } catch {
+      // ignore JSON parse failure
+    }
 
     // 3. Read all SQL files in sql/
     const sqlDir = path.join(repoRoot, "sql");
@@ -100,6 +109,7 @@ export async function GET() {
         scoringMd,
       },
       contractPy,
+      latestRun,
       sqlFiles,
     });
   } catch (error) {
