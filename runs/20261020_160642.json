@@ -1,0 +1,438 @@
+{
+  "timestamp": "20261020_160642",
+  "county_fips": "13121",
+  "county_name": "Fulton County, GA",
+  "plan_final": {
+    "county_fips": "13121",
+    "county_name": "Fulton County, GA",
+    "where_the_van_goes": [
+      {
+        "rank": 1,
+        "saturday_index": 1,
+        "tract_id": "13121011431",
+        "score": 0.826,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 34.6% (CDC PLACES small-area estimate).",
+            "value": 34.6,
+            "unit": "pct",
+            "tract_id": "13121011431",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest federally recognized safety-net clinic is 13.94 km (upper bound, not travel time; nearest federal site of any kind is 3.43 km).",
+            "value": 13.94,
+            "unit": "km",
+            "tract_id": "13121011431",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access.km_to_safety_net"
+          },
+          {
+            "claim": "7.5% of households have no vehicle available (66th national percentile) (CDC SVI ACS survey).",
+            "value": 7.5,
+            "unit": "pct",
+            "tract_id": "13121011431",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 10.0%, high blood pressure 25.1%, routine checkup 67.6% (CDC PLACES modeled).",
+            "value": 10.0,
+            "unit": "pct",
+            "tract_id": "13121011431",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": true,
+        "flag_reason": "[STATISTICAL_TIE] Tract 13121011431 (need_score=0.8260) is within 2.36% (<= 5.0% threshold; rule: approximate, no CI loaded) of unpicked tract 13121011430 (need_score=0.8065).",
+        "latitude": 34.0317499,
+        "longitude": -84.325769,
+        "km_to_safety_net": 13.94
+      },
+      {
+        "rank": 2,
+        "saturday_index": 2,
+        "tract_id": "13121010214",
+        "score": 0.7221,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 14.0% (CDC PLACES small-area estimate).",
+            "value": 14.0,
+            "unit": "pct",
+            "tract_id": "13121010214",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest federally recognized safety-net clinic is 8.13 km (upper bound, not travel time; nearest federal site of any kind is 8.13 km).",
+            "value": 8.13,
+            "unit": "km",
+            "tract_id": "13121010214",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access.km_to_safety_net"
+          },
+          {
+            "claim": "43.3% of households have no vehicle available (97th national percentile) (CDC SVI ACS survey).",
+            "value": 43.3,
+            "unit": "pct",
+            "tract_id": "13121010214",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 13.5%, high blood pressure 39.6%, routine checkup 79.2% (CDC PLACES modeled).",
+            "value": 13.5,
+            "unit": "pct",
+            "tract_id": "13121010214",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": false,
+        "flag_reason": null,
+        "latitude": 33.9851391,
+        "longitude": -84.3547122,
+        "km_to_safety_net": 8.13
+      },
+      {
+        "rank": 3,
+        "saturday_index": 3,
+        "tract_id": "13121007710",
+        "score": 0.5705,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 16.4% (CDC PLACES small-area estimate).",
+            "value": 16.4,
+            "unit": "pct",
+            "tract_id": "13121007710",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest federally recognized safety-net clinic is 5.74 km (upper bound, not travel time; nearest federal site of any kind is 5.74 km).",
+            "value": 5.74,
+            "unit": "km",
+            "tract_id": "13121007710",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access.km_to_safety_net"
+          },
+          {
+            "claim": "17.6% of households have no vehicle available (88th national percentile) (CDC SVI ACS survey).",
+            "value": 17.6,
+            "unit": "pct",
+            "tract_id": "13121007710",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 18.9%, high blood pressure 47.1%, routine checkup 81.5% (CDC PLACES modeled).",
+            "value": 18.9,
+            "unit": "pct",
+            "tract_id": "13121007710",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": false,
+        "flag_reason": null,
+        "latitude": 33.6716245,
+        "longitude": -84.5225112,
+        "km_to_safety_net": 5.74
+      },
+      {
+        "rank": 4,
+        "saturday_index": 4,
+        "tract_id": "13121011647",
+        "score": 0.5349,
+        "reasons": [
+          {
+            "claim": "Modeled adult (18-64) uninsured prevalence is 11.3% (CDC PLACES small-area estimate).",
+            "value": 11.3,
+            "unit": "pct",
+            "tract_id": "13121011647",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_uninsured"
+          },
+          {
+            "claim": "Straight-line distance to the nearest federally recognized safety-net clinic is 17.16 km (upper bound, not travel time; nearest federal site of any kind is 0.38 km).",
+            "value": 17.16,
+            "unit": "km",
+            "tract_id": "13121011647",
+            "scale": "tract",
+            "kind": "computed_upper_bound",
+            "source": "tract_access.km_to_safety_net"
+          },
+          {
+            "claim": "13.2% of households have no vehicle available (82th national percentile) (CDC SVI ACS survey).",
+            "value": 13.2,
+            "unit": "pct",
+            "tract_id": "13121011647",
+            "scale": "tract",
+            "kind": "survey",
+            "source": "burden_tracts.pct_no_vehicle"
+          },
+          {
+            "claim": "Chronic burden tiebreakers: diabetes 10.9%, high blood pressure 32.7%, routine checkup 77.3% (CDC PLACES modeled).",
+            "value": 10.9,
+            "unit": "pct",
+            "tract_id": "13121011647",
+            "scale": "tract",
+            "kind": "modeled",
+            "source": "burden_tracts.pct_diabetes"
+          }
+        ],
+        "flagged": true,
+        "flag_reason": "[STATISTICAL_TIE] Tract 13121011647 (need_score=0.5349) is within 1.63% (<= 5.0% threshold; rule: approximate, no CI loaded) of unpicked tract 13121011636 (need_score=0.5262).",
+        "latitude": 34.0601602,
+        "longitude": -84.3172449,
+        "km_to_safety_net": 17.16
+      }
+    ],
+    "what_we_could_not_tell_you": [
+      {
+        "claim": "No active federal shortage-area designations exist in Fulton County: 0 active designations and 99 designations with status 'Proposed For Withdrawal' in shortage_areas.",
+        "value": 0.0,
+        "unit": "active_designations",
+        "tract_id": null,
+        "scale": "fed_designation",
+        "kind": "reported",
+        "source": "shortage_areas.status"
+      },
+      {
+        "claim": "I can tell you about the region, not this street: PM2.5 air quality (mean 9.75 ug/m3, p90/p10 ratio 1.05x across 327 tracts) comes from a 12 km EPA grid and cannot rank census tracts.",
+        "value": 1.05,
+        "unit": "p90_p10_ratio",
+        "tract_id": null,
+        "scale": "grid_12km",
+        "kind": "modeled",
+        "source": "exposure_tracts.pm25"
+      },
+      {
+        "claim": "I can tell you about the region, not this street: Respiratory ED visit trends (2.91% latest week; 8-week range 2.75%-5.93%) are reported for a multi-county Health Service Area (Fulton, Clayton, DeKalb, Gwinnett) and cannot differentiate neighborhoods.",
+        "value": 2.91,
+        "unit": "pct_ed_visits_resp",
+        "tract_id": null,
+        "scale": "hsa_region",
+        "kind": "reported",
+        "source": "disease_weekly.pct_ed_visits_resp"
+      },
+      {
+        "claim": "47 of 51 federally recognized safety-net clinic records in Fulton County report 0 weekly operating hours in HRSA data (only 4 report hours > 0), and 0 report Saturday clinic hours.",
+        "value": 47.0,
+        "unit": "sites_missing_hours",
+        "tract_id": null,
+        "scale": "facility_point",
+        "kind": "reported",
+        "source": "care_sites.weekly_hours"
+      },
+      {
+        "claim": "All clinic distances (km_to_safety_net, km_to_any_care) are straight-line centroid upper bounds to federally recognized sites only\u2014not street driving or MARTA transit time.",
+        "value": 8.0,
+        "unit": "km_normalization_cap",
+        "tract_id": null,
+        "scale": "tract",
+        "kind": "computed_upper_bound",
+        "source": "tract_access.km_to_safety_net"
+      },
+      {
+        "claim": "25 of 327 Fulton tracts have NULL CDC PLACES modeled prevalence, 1 tract (13121980000, Airport) has -999 missing SVI pct_no_vehicle, and 0 _crude95ci confidence-interval columns exist in burden_tracts (ties within 5% need_score are evaluated as 'approximate, no CI loaded').",
+        "value": 25.0,
+        "unit": "tracts_missing_places",
+        "tract_id": null,
+        "scale": "tract",
+        "kind": "modeled",
+        "source": "burden_tracts.pct_uninsured"
+      }
+    ],
+    "who_this_plan_lands_on": {
+      "table": [
+        {
+          "group": "Black or African American (Non-Hispanic)",
+          "plan_population": 4264,
+          "plan_share_pct": 31.7,
+          "county_population": 453572,
+          "county_share_pct": 43.1,
+          "diff_pct_points": -11.4
+        },
+        {
+          "group": "White (Non-Hispanic)",
+          "plan_population": 3642,
+          "plan_share_pct": 27.1,
+          "county_population": 413234,
+          "county_share_pct": 39.3,
+          "diff_pct_points": -12.2
+        },
+        {
+          "group": "Hispanic or Latino (Any Race)",
+          "plan_population": 4396,
+          "plan_share_pct": 32.7,
+          "county_population": 75345,
+          "county_share_pct": 7.2,
+          "diff_pct_points": 25.5
+        },
+        {
+          "group": "Asian (Non-Hispanic)",
+          "plan_population": 700,
+          "plan_share_pct": 5.2,
+          "county_population": 76374,
+          "county_share_pct": 7.3,
+          "diff_pct_points": -2.1
+        },
+        {
+          "group": "Other / Two or More Races",
+          "plan_population": 434,
+          "plan_share_pct": 3.2,
+          "county_population": 32718,
+          "county_share_pct": 3.1,
+          "diff_pct_points": 0.1
+        }
+      ],
+      "finding": "Across the 4 selected tracts (total pop 13,436), Black residents are 31.7% vs 43.1% countywide (-11.4 pp), Hispanic/Latino residents are 32.7% vs 7.2% countywide (+25.5 pp), and White residents are 27.1% vs 39.3% countywide (-12.2 pp).",
+      "structural_hypothesis": "Race and ethnicity were strictly firewalled out of the Planner's inputs and scoring formula. Any demographic difference in the selected tracts reflects structural co-variation between adult uninsurance (PLACES 18-64), zero-vehicle household prevalence (CDC SVI), and spatial distance to federally recognized safety-net clinics across Fulton County."
+    },
+    "outreach": {
+      "flyer_en": "Free Mobile Health Van in Fulton County!\nWe are here to help you stay healthy. You do not need health insurance. You do not need an ID or any money. All care is 100% free.\n\nSaturday Dates and Stops:\n- Saturday 1: Tract 13121011431 (Southwest Atlanta)\n- Saturday 2: Tract 13121010214 (Bankhead / West Fulton)\n- Saturday 3: Tract 13121007710 (Oakland City / Sylvan Hills)\n- Saturday 4: Tract 13121011647 (South Fulton / College Park)\n\nFree Services Offered:\n- Fast blood pressure checks\n- Blood sugar and diabetes screenings\n- Free doctor checkups for the whole family\n- Help finding a free health clinic near your home\n\nWalk in any time from 9 AM to 3 PM. Everyone is welcome!",
+      "flyer_es": "\u00a1Unidad M\u00f3vil de Salud Gratuita en el Condado de Fulton!\nEstamos aqu\u00ed para ayudarle a cuidar su salud. No necesita seguro m\u00e9dico. No necesita identificaci\u00f3n ni dinero. Toda la atenci\u00f3n es 100% gratuita.\n\nFechas y Lugares de los S\u00e1bados:\n- S\u00e1bado 1: Sector 13121011431 (Suroeste de Atlanta)\n- S\u00e1bado 2: Sector 13121010214 (Bankhead / Fulton Oeste)\n- S\u00e1bado 3: Sector 13121007710 (Oakland City / Sylvan Hills)\n- S\u00e1bado 4: Sector 13121011647 (Fulton Sur / College Park)\n\nServicios Gratuitos:\n- Chequeos r\u00e1pidos de presi\u00f3n arterial\n- Pruebas de az\u00facar en sangre y diabetes\n- Consultas m\u00e9dicas gratuitas para toda la familia\n- Ayuda para encontrar cl\u00ednicas comunitarias cerca de su hogar\n\nAtenci\u00f3n sin cita previa de 9 AM a 3 PM. \u00a1Todos son bienvenidos!",
+      "sms_en": "Free Health Van in Fulton Co this Saturday 9am-3pm! Free checkups and diabetes care. No insurance or ID needed. Walk in anytime!",
+      "sms_es": "\u00a1Unidad de Salud gratis en Fulton este s\u00e1bado 9am-3pm! Chequeos y pruebas gratis. No se necesita seguro ni ID. \u00a1Los esperamos!",
+      "not_selected_message_en": "Thank you for your partnership. Your neighborhood had very high need scores and was closely considered for this month's 4 Saturday stops. Because the van has only 4 stops this month, nearby locations were selected. We want to bring the van to your community next. Please contact outreach@fultoncountyga.gov to schedule.",
+      "not_selected_message_es": "Gracias por su colaboraci\u00f3n. Su comunidad tuvo una alta prioridad en la evaluaci\u00f3n de este mes. Debido a que la unidad m\u00f3vil solo cuenta con 4 paradas este mes, se programaron sitios cercanos. Queremos visitar su vecindario el pr\u00f3ximo mes. Escr\u00edbanos a outreach@fultoncountyga.gov.",
+      "reading_grade": 7.48
+    },
+    "disagreement_log": [
+      {
+        "round": 1,
+        "draft_version": 1,
+        "draft_picks": [
+          "13121011431",
+          "13121011430",
+          "13121011421",
+          "13121010214"
+        ],
+        "status": "REVISE",
+        "revisions": [
+          {
+            "pick_tract_id": "13121011430",
+            "problem_type": "TOO_CLOSE_TOGETHER",
+            "explanation": "Picked tracts 13121011431 and 13121011430 are only 0.46 km apart (< 3.0 km minimum spacing).",
+            "suggested_action": "Exclude tract 13121011430 or enforce min_spacing_km=3.0 in score_and_schedule."
+          },
+          {
+            "pick_tract_id": "13121011421",
+            "problem_type": "TOO_CLOSE_TOGETHER",
+            "explanation": "Picked tracts 13121011431 and 13121011421 are only 1.17 km apart (< 3.0 km minimum spacing).",
+            "suggested_action": "Exclude tract 13121011421 or enforce min_spacing_km=3.0 in score_and_schedule."
+          },
+          {
+            "pick_tract_id": "13121011421",
+            "problem_type": "TOO_CLOSE_TOGETHER",
+            "explanation": "Picked tracts 13121011430 and 13121011421 are only 1.58 km apart (< 3.0 km minimum spacing).",
+            "suggested_action": "Exclude tract 13121011421 or enforce min_spacing_km=3.0 in score_and_schedule."
+          }
+        ],
+        "resolution_summary": "Auditor returned REVISE: 3 spacing violation(s) and 0 statistical tie note(s)."
+      },
+      {
+        "round": 2,
+        "draft_version": 2,
+        "draft_picks": [
+          "13121011431",
+          "13121010214",
+          "13121007710",
+          "13121011647"
+        ],
+        "status": "PASS",
+        "revisions": [
+          {
+            "pick_tract_id": "13121011431",
+            "problem_type": "STATISTICAL_TIE",
+            "explanation": "Tract 13121011431 (need_score=0.8260) is within 2.36% (<= 5.0% threshold; rule: approximate, no CI loaded) of unpicked tract 13121011430 (need_score=0.8065).",
+            "suggested_action": "Acknowledge statistical tie (approximate, no CI loaded) with tract 13121011430 or apply secondary burden tiebreakers (diabetes, high BP, routine checkup)."
+          },
+          {
+            "pick_tract_id": "13121011647",
+            "problem_type": "STATISTICAL_TIE",
+            "explanation": "Tract 13121011647 (need_score=0.5349) is within 1.63% (<= 5.0% threshold; rule: approximate, no CI loaded) of unpicked tract 13121011636 (need_score=0.5262).",
+            "suggested_action": "Acknowledge statistical tie (approximate, no CI loaded) with tract 13121011636 or apply secondary burden tiebreakers (diabetes, high BP, routine checkup)."
+          }
+        ],
+        "resolution_summary": "Spacing requirements satisfied (0 violations). Statistical tie notes recorded and flagged for human review."
+      }
+    ]
+  },
+  "disagreement_log": [
+    {
+      "round": 1,
+      "draft_version": 1,
+      "draft_picks": [
+        "13121011431",
+        "13121011430",
+        "13121011421",
+        "13121010214"
+      ],
+      "status": "REVISE",
+      "revisions": [
+        {
+          "pick_tract_id": "13121011430",
+          "problem_type": "TOO_CLOSE_TOGETHER",
+          "explanation": "Picked tracts 13121011431 and 13121011430 are only 0.46 km apart (< 3.0 km minimum spacing).",
+          "suggested_action": "Exclude tract 13121011430 or enforce min_spacing_km=3.0 in score_and_schedule."
+        },
+        {
+          "pick_tract_id": "13121011421",
+          "problem_type": "TOO_CLOSE_TOGETHER",
+          "explanation": "Picked tracts 13121011431 and 13121011421 are only 1.17 km apart (< 3.0 km minimum spacing).",
+          "suggested_action": "Exclude tract 13121011421 or enforce min_spacing_km=3.0 in score_and_schedule."
+        },
+        {
+          "pick_tract_id": "13121011421",
+          "problem_type": "TOO_CLOSE_TOGETHER",
+          "explanation": "Picked tracts 13121011430 and 13121011421 are only 1.58 km apart (< 3.0 km minimum spacing).",
+          "suggested_action": "Exclude tract 13121011421 or enforce min_spacing_km=3.0 in score_and_schedule."
+        }
+      ],
+      "resolution_summary": "Auditor returned REVISE: 3 spacing violation(s) and 0 statistical tie note(s)."
+    },
+    {
+      "round": 2,
+      "draft_version": 2,
+      "draft_picks": [
+        "13121011431",
+        "13121010214",
+        "13121007710",
+        "13121011647"
+      ],
+      "status": "PASS",
+      "revisions": [
+        {
+          "pick_tract_id": "13121011431",
+          "problem_type": "STATISTICAL_TIE",
+          "explanation": "Tract 13121011431 (need_score=0.8260) is within 2.36% (<= 5.0% threshold; rule: approximate, no CI loaded) of unpicked tract 13121011430 (need_score=0.8065).",
+          "suggested_action": "Acknowledge statistical tie (approximate, no CI loaded) with tract 13121011430 or apply secondary burden tiebreakers (diabetes, high BP, routine checkup)."
+        },
+        {
+          "pick_tract_id": "13121011647",
+          "problem_type": "STATISTICAL_TIE",
+          "explanation": "Tract 13121011647 (need_score=0.5349) is within 1.63% (<= 5.0% threshold; rule: approximate, no CI loaded) of unpicked tract 13121011636 (need_score=0.5262).",
+          "suggested_action": "Acknowledge statistical tie (approximate, no CI loaded) with tract 13121011636 or apply secondary burden tiebreakers (diabetes, high BP, routine checkup)."
+        }
+      ],
+      "resolution_summary": "Spacing requirements satisfied (0 violations). Statistical tie notes recorded and flagged for human review."
+    }
+  ]
+}

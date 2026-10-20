@@ -1,0 +1,424 @@
+sources:
+  fulton-bq:
+    kind: bigquery
+    project: qwiklabs-gcp-04-26e02fd45203
+    location: US
+
+tools:
+  get_tract_burden:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Get adult health burden and chronic disease prevalence for Fulton County census tracts
+      from CDC PLACES (uninsured 18-64, routine checkup, diabetes, high blood pressure, asthma,
+      COPD, mobility difficulty). Pass comma-separated 11-digit tract IDs or 'ALL' for the top
+      25 highest-uninsured tracts. Note: _crude95ci columns are not present in this snapshot.
+    parameters:
+      - name: tract_ids
+        type: string
+        description: Comma-separated 11-digit census tract IDs (e.g. '13121010214,13121011431') or 'ALL'.
+        default: "ALL"
+    statement: |
+      SELECT
+        LPAD(CAST(geo_id AS STRING), 11, '0') AS tract_id,
+        total_pop,
+        pct_uninsured,
+        pct_checkup,
+        pct_diabetes,
+        pct_high_bp,
+        pct_asthma,
+        pct_copd,
+        pct_mobility_difficulty,
+        FALSE AS has_ci_columns,
+        'tract' AS scale,
+        'modeled' AS kind,
+        'burden_tracts' AS source_table
+      FROM `a4i_health.burden_tracts`
+      WHERE (@tract_ids = 'ALL' OR LPAD(CAST(geo_id AS STRING), 11, '0') IN UNNEST(SPLIT(@tract_ids, ',')))
+        AND pct_uninsured IS NOT NULL
+      ORDER BY pct_uninsured DESC
+      LIMIT 50
+
+  get_tract_access:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Get straight-line upper-bound distances to any federal care site and nearest adult
+      safety-net site (FQHC or Health Center site, school clinics excluded), distance gap,
+      no-vehicle household share and national percentile, age 65+ share, lack-transport share
+      (NULL in snapshot), centroid lat/lon, and population for Fulton County census tracts.
+    parameters:
+      - name: limit
+        type: integer
+        description: Maximum number of tracts to return (use 350 to fetch all 326 Fulton tracts).
+        default: 50
+    statement: |
+      SELECT
+        LPAD(CAST(a.geo_id AS STRING), 11, '0') AS tract_id,
+        a.total_pop AS population,
+        ROUND(a.km_to_any_care, 2) AS any_care_km,
+        ROUND(COALESCE(x.km_to_safety_net_adult, a.km_to_safety_net), 2) AS safety_net_km,
+        ROUND(x.km_to_safety_net_adult, 2) AS km_to_safety_net_adult,
+        ROUND(a.km_to_safety_net, 2) AS km_to_all_safety_net,
+        ROUND(a.extra_km_if_uninsured, 2) AS gap_km,
+        NULLIF(b.pct_no_vehicle, -999) AS pct_no_vehicle,
+        NULLIF(b.pctile_no_vehicle, -999) AS pctile_no_vehicle,
+        NULLIF(b.pct_age_65_plus, -999) AS pct_age_65_plus,
+        CAST(NULL AS FLOAT64) AS pct_lack_transport,
+        b.latitude,
+        b.longitude,
+        'tract' AS scale,
+        'computed_upper_bound' AS kind,
+        'tract_access_adult+burden_tracts' AS source_table
+      FROM `a4i_health.tract_access` AS a
+      LEFT JOIN `a4i_health.burden_tracts` AS b
+        ON LPAD(CAST(a.geo_id AS STRING), 11, '0') = LPAD(CAST(b.geo_id AS STRING), 11, '0')
+      LEFT JOIN `a4i_health.tract_access_adult` AS x
+        ON LPAD(CAST(a.geo_id AS STRING), 11, '0') = LPAD(CAST(x.geo_id AS STRING), 11, '0')
+      ORDER BY safety_net_km DESC
+      LIMIT @limit
+
+  get_site_capacity:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Get in-county federally recognized safety-net care sites (FQHC and Health Center site)
+      in Fulton County with weekly operating hours (TOT_OPER_HR_PER_WEEK). Never selects
+      admin contact or person-level columns.
+    statement: |
+      SELECT
+        FACILITY_NM AS facility_name,
+        site_kind,
+        CMS_PROVIDER_CITY AS city,
+        CMS_PROVIDER_ZIP_CD AS zip_code,
+        TOT_OPER_HR_PER_WEEK AS oper_hours_per_week,
+        HCC_LOC_SETTING_DESC AS setting_desc,
+        latitude,
+        longitude,
+        'facility_point' AS scale,
+        'reported' AS kind,
+        'care_sites.TOT_OPER_HR_PER_WEEK' AS source_table
+      FROM `a4i_health.care_sites`
+      WHERE site_kind IN ('FQHC', 'Health Center site')
+      ORDER BY TOT_OPER_HR_PER_WEEK DESC NULLS LAST
+
+  get_hsa_trend:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Get the last N weeks of respiratory emergency department visit percentages (COVID-19,
+      influenza, RSV, combined) for Fulton County's multi-county Health Service Area
+      (Clayton, DeKalb, Fulton, Gwinnett). Always tagged scale='hsa_region'.
+    parameters:
+      - name: weeks
+        type: integer
+        description: Number of most recent weeks to return.
+        default: 8
+    statement: |
+      SELECT
+        CAST(DATE(week_end) AS STRING) AS week_end_date,
+        hsa,
+        hsa_counties,
+        ROUND(percent_visits_combined, 2) AS pct_ed_combined,
+        ROUND(percent_visits_covid, 2) AS pct_ed_covid,
+        ROUND(percent_visits_influenza, 2) AS pct_ed_influenza,
+        ROUND(percent_visits_rsv, 2) AS pct_ed_rsv,
+        ed_trends_covid,
+        ed_trends_influenza,
+        ed_trends_rsv,
+        'hsa_region' AS scale,
+        'reported' AS kind,
+        'disease_weekly' AS source_table
+      FROM `a4i_health.disease_weekly`
+      WHERE SAFE_CAST(fips AS INT64) = 13121
+      ORDER BY week_end DESC
+      LIMIT @weeks
+
+  get_county_air_summary:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Get county-level PM2.5 air quality summary across Fulton County from the 12 km EPA model
+      grid (exposure_tracts). Must NEVER be used to rank individual tracts; report at county
+      level only ('bad air days').
+    statement: |
+      WITH stats AS (
+        SELECT
+          COUNT(*) AS tract_rows,
+          ROUND(AVG(mean_pm), 2) AS county_mean_pm25,
+          ROUND(MIN(mean_pm), 2) AS min_mean_pm25,
+          ROUND(MAX(mean_pm), 2) AS max_mean_pm25,
+          ROUND(APPROX_QUANTILES(mean_pm, 100)[OFFSET(10)], 2) AS p10_mean_pm25,
+          ROUND(APPROX_QUANTILES(mean_pm, 100)[OFFSET(90)], 2) AS p90_mean_pm25,
+          ROUND(AVG(days_over_12), 1) AS avg_days_over_12,
+          ROUND(AVG(days_over_20), 1) AS avg_days_over_20,
+          ROUND(AVG(days_over_25), 1) AS avg_days_over_25,
+          ROUND(AVG(days_over_35), 1) AS avg_days_over_35
+        FROM `a4i_health.exposure_tracts`
+      )
+      SELECT
+        tract_rows,
+        county_mean_pm25,
+        p10_mean_pm25,
+        p90_mean_pm25,
+        ROUND(SAFE_DIVIDE(p90_mean_pm25, p10_mean_pm25), 2) AS p90_p10_ratio,
+        avg_days_over_12,
+        avg_days_over_20,
+        avg_days_over_25,
+        avg_days_over_35,
+        'grid_12km' AS scale,
+        'modeled' AS kind,
+        'exposure_tracts' AS source_table
+      FROM stats
+
+  get_shortage_status:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Get count of active vs proposed-for-withdrawal HRSA Health Professional Shortage Area
+      (HPSA) geographic designations for Fulton County, plus count of separate facility
+      designations (never unioned).
+    statement: |
+      SELECT
+        (SELECT COUNT(*) FROM `a4i_health.shortage_areas`) AS active_shortage_area_count,
+        99 AS proposed_for_withdrawal_area_count,
+        (SELECT COUNT(*) FROM `a4i_health.shortage_facilities`) AS designated_shortage_facility_count,
+        'No active federal shortage-area designations in Fulton County (all 99 geographic HPSA designations are Proposed For Withdrawal).' AS status_note,
+        'fed_designation' AS scale,
+        'reported' AS kind,
+        'shortage_areas' AS source_table
+
+  get_need_ranking:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Plan C need-only ranking for tracts where the mobile van adds access (>2 km from an adult
+      safety-net site; school clinics excluded). Computes need_score from uninsured + no_vehicle
+      + checkup percent ranks. Tiebreakers: pct_diabetes DESC, pct_high_bp DESC.
+    parameters:
+      - name: limit
+        type: integer
+        description: Number of top-ranked tracts to return.
+        default: 30
+    statement: |
+      WITH s AS (
+        SELECT
+          LPAD(CAST(a.geo_id AS STRING), 11, '0') AS tract_id,
+          a.total_pop,
+          a.pct_uninsured,
+          IF(b.pct_no_vehicle < 0, NULL, b.pct_no_vehicle) AS pct_no_vehicle,
+          b.pctile_no_vehicle,
+          b.pct_checkup,
+          b.pct_diabetes,
+          b.pct_high_bp,
+          b.pct_asthma,
+          b.pct_copd,
+          b.pct_mobility_difficulty,
+          b.latitude,
+          b.longitude,
+          x.km_to_safety_net_adult,
+          a.km_to_safety_net,
+          a.km_to_any_care,
+          PERCENT_RANK() OVER (ORDER BY a.pct_uninsured)
+          + PERCENT_RANK() OVER (ORDER BY IF(b.pct_no_vehicle < 0, NULL, b.pct_no_vehicle))
+          + PERCENT_RANK() OVER (ORDER BY b.pct_checkup DESC) AS need_score
+        FROM `a4i_health.tract_access` a
+        LEFT JOIN `a4i_health.burden_tracts` b USING (geo_id)
+        JOIN `a4i_health.tract_access_adult` x USING (geo_id)
+        WHERE a.total_pop > 0
+      )
+      SELECT
+        ROW_NUMBER() OVER (
+          ORDER BY need_score DESC, pct_diabetes DESC, pct_high_bp DESC
+        ) AS need_rank,
+        tract_id,
+        ROUND(need_score, 4) AS need_score,
+        pct_uninsured,
+        ROUND(km_to_safety_net_adult, 2) AS safety_net_km,
+        ROUND(km_to_safety_net_adult, 2) AS km_to_safety_net_adult,
+        ROUND(km_to_safety_net, 2) AS km_to_safety_net,
+        ROUND(km_to_any_care, 2) AS any_care_km,
+        pct_no_vehicle,
+        pctile_no_vehicle,
+        pct_checkup,
+        pct_diabetes,
+        pct_high_bp,
+        pct_asthma,
+        pct_copd,
+        pct_mobility_difficulty,
+        total_pop,
+        latitude,
+        longitude,
+        'tract' AS scale,
+        'modeled' AS kind,
+        'rank_tracts_plan_c' AS source_table
+      FROM s
+      WHERE km_to_safety_net_adult > 2
+      ORDER BY need_rank ASC
+      LIMIT @limit
+
+  get_nearest_state_safety_net:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      Find the nearest safety-net care site (FQHC or Health Center site) across all of Georgia
+      in care_sites_state for a given 11-digit Fulton census tract ID, and compare its distance
+      to the nearest in-county safety-net site.
+    parameters:
+      - name: tract_id
+        type: string
+        description: 11-character zero-padded census tract ID (e.g. '13121010214').
+    statement: |
+      WITH tract_pt AS (
+        SELECT
+          LPAD(CAST(b.geo_id AS STRING), 11, '0') AS tract_id,
+          b.longitude,
+          b.latitude,
+          a.km_to_safety_net AS in_county_safety_net_km
+        FROM `a4i_health.burden_tracts` AS b
+        INNER JOIN `a4i_health.tract_access` AS a
+          ON LPAD(CAST(b.geo_id AS STRING), 11, '0') = LPAD(CAST(a.geo_id AS STRING), 11, '0')
+        WHERE LPAD(CAST(b.geo_id AS STRING), 11, '0') = LPAD(CAST(@tract_id AS STRING), 11, '0')
+      ),
+      state_sites AS (
+        SELECT
+          s.FACILITY_NM AS facility_name,
+          s.CMS_PROVIDER_CITY AS city,
+          s.site_kind,
+          s.latitude AS site_lat,
+          s.longitude AS site_lon,
+          ROUND(
+            ST_DISTANCE(
+              ST_GEOGPOINT(t.longitude, t.latitude),
+              ST_GEOGPOINT(s.longitude, s.latitude)
+            ) / 1000.0,
+            2
+          ) AS state_safety_net_km,
+          ROUND(t.in_county_safety_net_km, 2) AS in_county_safety_net_km,
+          t.tract_id,
+          NOT EXISTS (
+            SELECT 1
+            FROM `a4i_health.care_sites` AS c
+            WHERE c.site_kind IN ('FQHC', 'Health Center site')
+              AND ABS(c.latitude - s.latitude) < 1e-4
+              AND ABS(c.longitude - s.longitude) < 1e-4
+          ) AS is_outside_fulton
+        FROM tract_pt AS t
+        CROSS JOIN `a4i_health.care_sites_state` AS s
+        WHERE s.site_kind IN ('FQHC', 'Health Center site')
+          AND s.latitude IS NOT NULL
+          AND s.longitude IS NOT NULL
+      )
+      SELECT
+        tract_id,
+        facility_name,
+        city,
+        site_kind,
+        state_safety_net_km,
+        in_county_safety_net_km,
+        is_outside_fulton,
+        'facility_point' AS scale,
+        'computed_upper_bound' AS kind,
+        'care_sites_state' AS source_table
+      FROM state_sites
+      ORDER BY state_safety_net_km ASC
+      LIMIT 1
+
+  get_tract_demographics:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      AUDIT_TOOLS ONLY: Fetch census tract racial/ethnic demographic counts from
+      a4i_audit.tract_demographics for a comma-separated list of 11-digit tract IDs.
+    parameters:
+      - name: tract_ids
+        type: string
+        description: Comma-separated 11-character census tract IDs.
+    statement: |
+      SELECT
+        LPAD(CAST(geo_id AS STRING), 11, '0') AS tract_id,
+        total_pop,
+        black_pop,
+        white_pop,
+        hispanic_pop,
+        asian_pop,
+        amerindian_pop,
+        other_race_pop,
+        two_or_more_races_pop,
+        'tract' AS scale,
+        'survey' AS kind,
+        'a4i_audit.tract_demographics' AS source_table
+      FROM `a4i_audit.tract_demographics`
+      WHERE LPAD(CAST(geo_id AS STRING), 11, '0') IN UNNEST(SPLIT(@tract_ids, ','))
+      ORDER BY tract_id
+
+  get_county_demographics:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      AUDIT_TOOLS ONLY: Fetch Fulton County aggregate racial/ethnic demographic totals
+      from a4i_audit.tract_demographics for equity comparison against selected tracts.
+    statement: |
+      SELECT
+        '13121' AS county_fips,
+        COUNT(*) AS tract_count,
+        SUM(total_pop) AS total_pop,
+        SUM(black_pop) AS black_pop,
+        SUM(white_pop) AS white_pop,
+        SUM(hispanic_pop) AS hispanic_pop,
+        SUM(asian_pop) AS asian_pop,
+        SUM(amerindian_pop) AS amerindian_pop,
+        SUM(other_race_pop) AS other_race_pop,
+        SUM(two_or_more_races_pop) AS two_or_more_races_pop,
+        'county' AS scale,
+        'survey' AS kind,
+        'a4i_audit.tract_demographics' AS source_table
+      FROM `a4i_audit.tract_demographics`
+
+  get_equity_audit_v2:
+    kind: bigquery-sql
+    source: fulton-bq
+    description: >-
+      AUDIT_TOOLS ONLY: Compute uninsured-weighted demographic shares for picked tracts
+      vs countywide uninsured benchmark (Black 54.2%, Hisp 8.4%, White 29.0%, Asian 5.4%).
+    parameters:
+      - name: tract_ids
+        type: string
+        description: Comma-separated 11-digit tract IDs.
+    statement: |
+      WITH acs AS (
+        SELECT a.geo_id, a.total_pop * b.pct_uninsured/100 AS w,
+          a.black_pop/a.total_pop AS s_black, a.hispanic_pop/a.total_pop AS s_hisp,
+          a.white_pop/a.total_pop AS s_white, a.asian_pop/a.total_pop AS s_asian
+        FROM `bigquery-public-data.census_bureau_acs.censustract_2020_5yr` a
+        JOIN a4i_health.burden_tracts b USING (geo_id)
+        WHERE a.total_pop > 0),
+      picked AS (SELECT geo_id FROM UNNEST(SPLIT(@tract_ids, ',')) AS geo_id),
+      g AS (SELECT 'county_uninsured' AS grp, * FROM acs
+            UNION ALL SELECT 'plan', acs.* FROM acs JOIN picked USING (geo_id))
+      SELECT grp, CAST(SUM(w) AS INT64) est_uninsured,
+        ROUND(100*SUM(w*s_black)/SUM(w),1) pct_black,
+        ROUND(100*SUM(w*s_hisp)/SUM(w),1) pct_hispanic,
+        ROUND(100*SUM(w*s_white)/SUM(w),1) pct_white,
+        ROUND(100*SUM(w*s_asian)/SUM(w),1) pct_asian
+      FROM g GROUP BY grp
+
+toolsets:
+  scout_burden:
+    - get_tract_burden
+  scout_access:
+    - get_tract_access
+    - get_site_capacity
+  scout_context:
+    - get_hsa_trend
+    - get_county_air_summary
+    - get_shortage_status
+  planner:
+    - get_tract_access
+    - get_need_ranking
+  audit_tools:
+    - get_nearest_state_safety_net
+    - get_tract_demographics
+    - get_county_demographics
+    - get_equity_audit_v2
+
