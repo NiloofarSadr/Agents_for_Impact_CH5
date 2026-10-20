@@ -167,6 +167,24 @@ async def audit_gate(ctx: Context) -> Event:
             if rev_dict:
                 revisions.append(AuditRevision.model_validate(rev_dict))
 
+    # 5. Equity audit flags (§3.1 & §3.2)
+    if equity_res.get("has_flags") and revise_round < 1:
+        flagged_groups = [g["group"] for g in equity_res.get("table", []) if g.get("flagged")]
+        revisions.append(
+            AuditRevision(
+                pick_tract_id="ALL",
+                problem_type=ProblemType.EQUITY_FLAG,
+                explanation=(
+                    f"Plan draft violates four-fifths equity threshold (< 0.80 benchmark) for: "
+                    f"{', '.join(flagged_groups)}. Under-represents county uninsured benchmark distribution."
+                ),
+                suggested_action=(
+                    "Perform combinatorial search over validly spaced sets (>= 5 km) to maximize need "
+                    "subject to equity constraints."
+                ),
+            )
+        )
+
     # Determine routing: allow 1 real revise loop if needed, then PASS to Composer
     has_method_problems = len(revisions) > 0
     should_revise = has_method_problems and (revise_round < 1)
