@@ -14,3 +14,13 @@ Flag rule: four-fifths rule, ratio < 0.8 -> flag, routed to the human.
 - First audit benchmark (total population) was wrong for a needs-targeted program; replaced with uninsured population.
 - Neither plan passes for every group; the trade-off goes to the outreach lead.
 - Caveats: tract-level ACS margins of error; PLACES values are modeled; top-30 pools, not final 4.
+
+## Add-on checks
+**Clinic hours (HRSA TOT_OPER_HR_PER_WEEK):** 5 of 30 health center sites open <20 h/week (min 4 h).
+Counting only sites open >=20 h moves just 2 tracts >1 km farther (max 1.29 km). Lower bound:
+hours unknown for all 23 FQHCs. In Fulton, opening hours do not change the access picture.
+
+**Confidence intervals (PLACES ACCESS2, 2023 BRFSS):** the top 2 tracts (34.6% uninsured) overlap
+only 4 lower-ranked tracts - a real signal. From rank 3 on, each tract's CI overlaps 35-67
+lower-ranked tracts: a statistical tie. Planner rule: overlapping CIs = tied; break ties by
+pct_no_vehicle and >=5 km spacing. Table: a4i_health.places_ci (script: scripts/fetch_places_ci.py).
