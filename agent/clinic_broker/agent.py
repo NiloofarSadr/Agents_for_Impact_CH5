@@ -206,7 +206,8 @@ async def audit_gate(ctx: Context) -> Event:
                 f"Auditor requested revision (round {revise_round + 1}): {len(revisions)} method issue(s) found."
                 if should_revise
                 else (
-                    "Plan approved by Auditor."
+                    ("Method checks pass, but the equity flag remains (the race-blind Planner cannot fix it); sent to Composer."
+                     if any(g.get("flagged") for g in equity_res.get("table", [])) else "Plan approved by Auditor.")
                     if not has_method_problems
                     else f"Shipped after 2 rounds with {len(revisions)} unresolved item(s) flagged for human review."
                 )

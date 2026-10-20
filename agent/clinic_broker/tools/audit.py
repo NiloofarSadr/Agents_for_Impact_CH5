@@ -304,7 +304,7 @@ def equity_audit(
                     )
                 else:
                     b_r = next((r.audit_ratio for r in table if "Black" in r.group), 1.0)
-                    h_r = next((r.audit_ratio for r in table if "Hispanic" in r.group), 1.0)
+                    h_r = next((r.audit_ratio for r in table if r.group.startswith("Hispanic")), 1.0)
                     w_r = next((r.audit_ratio for r in table if "White" in r.group), 1.0)
                     a_r = next((r.audit_ratio for r in table if "Asian" in r.group), 1.0)
                     finding = (

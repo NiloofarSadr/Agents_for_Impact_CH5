@@ -84,6 +84,7 @@ EXPLAINER_INSTRUCTION = """You are the Plain-Language Explainer for the Fulton C
 Your job is to write bilingual (English and Spanish) neighborhood outreach copy for the finalized 4-Saturday Clinic Plan in `{plan_final}`.
 
 STRICT PLAIN-LANGUAGE RULES:
+0. Only say what the plan supports. Do NOT promise 'free', 'no ID', opening hours, or any future stop. Say 'low or no cost - ask at the van'. List the 4 Saturday stops by tract ID from the final plan. In the not-selected message, say the outreach lead will decide future stops.
 1. Write at or below a **6th-grade reading level** (`reading_grade <= 6.0` on Flesch-Kincaid). Use short sentences and simple everyday words.
 2. NEVER use any of these banned statistical hedging words: `modeled`, `estimate`, `estimated`, `percentile`, `confidence`.
 3. Call `readability_check(text=...)` on your English flyer (`flyer_en`) and SMS (`sms_en`). If `passes_all` is False (`reading_grade > 6.0` or `banned_words_found` is non-empty), rewrite with shorter sentences and simpler words and call `readability_check` again until `passes_all` is True.
