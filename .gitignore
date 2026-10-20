@@ -22,3 +22,5 @@ Thumbs.db
 # Local data
 *.parquet
 *.csv.gz
+toolbox
+agent/clinic_broker/.adk/
