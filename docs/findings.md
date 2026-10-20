@@ -48,7 +48,7 @@ Flags go to the outreach lead; Asian group is small, so its ratio is noisy.
 Greedy spacing on Plan C gave 11431/10125/06900/06602: Black ratio 0.45 -> FLAG. Lesson: audit the
 final stops, not the candidate pool. Exhaustive search (scripts/pick4.py: top 15, all 4-combos
 >=5 km apart, 623 tested) -> recommended: 13121010125, 13121006900, 13121011307, 13121009405
-(need 9.16; Black 1.05, Hispanic 0.82, White 0.86, Asian 1.00; no flags).
+(need 9.16; BigQuery audit: Black 1.02, Hispanic 0.81, White 0.88, Asian 1.04; no flags).
 Alternative: 06900/11421/11307/09405 (need 9.01, ~22% more uninsured reached, no flags).
 Trade-off surfaced to the human: 11431 (34.6% uninsured, top tract) appears in no passing set.
 Small sample (~2,150 est. uninsured) -> ratios are noisy.
