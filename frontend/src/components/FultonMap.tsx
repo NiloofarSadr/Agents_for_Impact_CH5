@@ -8,23 +8,9 @@ import {
   TractStop,
 } from "@/data/contractData";
 import {
-  MapPin,
   ShieldAlert,
-  Building2,
-  CalendarClock,
-  CheckCircle2,
-  Layers,
-  ZoomIn,
   Navigation,
 } from "lucide-react";
-
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GoogleAny = any;
 
 interface FultonMapProps {
   locale: Locale;
@@ -34,7 +20,6 @@ interface FultonMapProps {
   onToggleRejectedPin: () => void;
 }
 
-// Fixed adult safety-net clinics in Fulton County for distance verification
 const FIXED_CLINICS = [
   {
     name: "Grady Health System - Main",
@@ -62,69 +47,12 @@ const FIXED_CLINICS = [
   },
 ];
 
-// Dark theme map styling matching the dashboard aesthetic
-const DARK_MAP_STYLE: GoogleAny[] = [
-  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
-  {
-    featureType: "administrative.locality",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#cbd5e1" }],
-  },
-  {
-    featureType: "poi",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#64748b" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#132338" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#1e293b" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#0f172a" }],
-  },
-  {
-    featureType: "road",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#64748b" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#334155" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry.stroke",
-    stylers: [{ color: "#1e293b" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#082f49" }],
-  },
-  {
-    featureType: "water",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#38bdf8" }],
-  },
-];
-
-function parseLatLng(latStr: string, lngStr: string): { lat: number; lng: number } {
+function parseLatLng(latStr: string, lngStr: string): [number, number] {
   const latMatch = latStr.match(/([\d.]+)/);
   const lngMatch = lngStr.match(/([\d.]+)/);
   const lat = latMatch ? parseFloat(latMatch[1]) : 33.749;
   const lng = lngMatch ? -parseFloat(lngMatch[1]) : -84.388;
-  return { lat, lng };
+  return [lat, lng];
 }
 
 export function FultonMap({
@@ -135,14 +63,17 @@ export function FultonMap({
   onToggleRejectedPin,
 }: FultonMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<GoogleAny>(null);
-  const markersRef = useRef<GoogleAny[]>([]);
-  const circlesRef = useRef<GoogleAny[]>([]);
-  const infoWindowRef = useRef<GoogleAny>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapInstanceRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const layerGroupRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tileLayerRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const LRef = useRef<any>(null);
 
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
-  const [mapError, setMapError] = useState<string | null>(null);
-  const [mapType, setMapType] = useState<"roadmap" | "hybrid" | "satellite">("roadmap");
+  const [mapType, setMapType] = useState<"google_road" | "google_hybrid" | "dark">("google_road");
 
   const selectedStop: TractStop =
     RECOMMENDED_STOPS.find((s) => s.rank === selectedRank) ||
@@ -159,7 +90,7 @@ export function FultonMap({
         : "Show Unselected Pin (13121011431)",
       activePinLabel: "Active Map Selection",
       recenterBtn: "Recenter Fulton County",
-      loading: "Initializing Google Maps API...",
+      loading: "Loading Real Fulton County Google Map...",
       tractHighlight: "Tract Service Catchment Area (~2.2 km)",
     },
     es: {
@@ -172,7 +103,7 @@ export function FultonMap({
         : "Mostrar Pin No Elegido (11431)",
       activePinLabel: "Selección Activa en Mapa",
       recenterBtn: "Recentrar Condado de Fulton",
-      loading: "Iniciando Google Maps API...",
+      loading: "Cargando Mapa de Google de Fulton...",
       tractHighlight: "Área de Cobertura del Tramo (~2.2 km)",
     },
     vi: {
@@ -185,145 +116,175 @@ export function FultonMap({
         : "Hiện Điểm Không Chọn (11431)",
       activePinLabel: "Điểm Đang Chọn trên Bản đồ",
       recenterBtn: "Căn giữa Quận Fulton",
-      loading: "Đang tải Google Maps API...",
+      loading: "Đang tải Bản đồ Google Quận Fulton...",
       tractHighlight: "Vùng Phủ Sóng Phân Khu (~2.2 km)",
     },
   }[locale];
 
-  // Load Google Maps JavaScript API
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (window.google?.maps) {
-      setMapLoaded(true);
-      return;
+  // Helper to get tile URL
+  const getTileConfig = (type: "google_road" | "google_hybrid" | "dark") => {
+    if (type === "google_hybrid") {
+      return {
+        url: "https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+        subdomains: ["0", "1", "2", "3"],
+        attribution: "&copy; Google Maps",
+        maxZoom: 20,
+      };
     }
-
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
-    const scriptUrl = apiKey
-      ? `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`
-      : `https://maps.googleapis.com/maps/api/js?libraries=geometry`;
-
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (existingScript) {
-      existingScript.addEventListener("load", () => setMapLoaded(true));
-      return;
+    if (type === "dark") {
+      return {
+        url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        subdomains: ["a", "b", "c", "d"],
+        attribution: "&copy; OpenStreetMap &copy; CARTO",
+        maxZoom: 19,
+      };
     }
-
-    const script = document.createElement("script");
-    script.src = scriptUrl;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      setMapLoaded(true);
+    // google_road
+    return {
+      url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+      subdomains: ["0", "1", "2", "3"],
+      attribution: "&copy; Google Maps",
+      maxZoom: 20,
     };
-    script.onerror = () => {
-      setMapError("Could not load Google Maps script. Showing fallback.");
-    };
-    document.head.appendChild(script);
-  }, []);
+  };
 
-  // Initialize Map
+  // Initialize Leaflet Map with Google Maps Tiles
   useEffect(() => {
-    if (!mapLoaded || !mapContainerRef.current || !window.google?.maps) return;
+    let mounted = true;
 
-    try {
-      const initialCenter = { lat: 33.72, lng: -84.45 };
-      const map = new google.maps.Map(mapContainerRef.current, {
-        center: initialCenter,
+    async function initMap() {
+      if (typeof window === "undefined" || !mapContainerRef.current) return;
+      if (mapInstanceRef.current) return;
+
+      const L = (await import("leaflet")).default;
+      if (!mounted || !mapContainerRef.current) return;
+      LRef.current = L;
+
+      const map = L.map(mapContainerRef.current, {
+        center: [33.72, -84.45],
         zoom: 11,
-        mapTypeId: mapType,
-        styles: mapType === "roadmap" ? DARK_MAP_STYLE : undefined,
-        disableDefaultUI: false,
         zoomControl: true,
-        streetViewControl: false,
-        mapTypeControl: false,
-        fullscreenControl: true,
+        attributionControl: false,
       });
 
+      const tileCfg = getTileConfig(mapType);
+      const tileLayer = L.tileLayer(tileCfg.url, {
+        subdomains: tileCfg.subdomains,
+        maxZoom: tileCfg.maxZoom,
+      }).addTo(map);
+
+      const layerGroup = L.layerGroup().addTo(map);
+
       mapInstanceRef.current = map;
-      infoWindowRef.current = new google.maps.InfoWindow();
-    } catch (e) {
-      console.error("Map init error:", e);
-      setMapError("Failed to initialize Google Maps.");
+      tileLayerRef.current = tileLayer;
+      layerGroupRef.current = layerGroup;
+
+      setMapLoaded(true);
     }
-  }, [mapLoaded, mapType]);
 
-  // Update Markers & Highlighted Tract Areas
-  const renderOverlays = useCallback(() => {
+    initMap();
+
+    return () => {
+      mounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handle Layer Style Changes
+  useEffect(() => {
+    if (!mapLoaded || !mapInstanceRef.current || !LRef.current) return;
+    const L = LRef.current;
     const map = mapInstanceRef.current;
-    if (!map || !window.google?.maps) return;
 
-    // Clear previous markers and circles
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
-    circlesRef.current.forEach((c) => c.setMap(null));
-    circlesRef.current = [];
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
 
-    // 1. Draw Recommended Stops & Tract Highlight Areas
+    const tileCfg = getTileConfig(mapType);
+    const newTileLayer = L.tileLayer(tileCfg.url, {
+      subdomains: tileCfg.subdomains,
+      maxZoom: tileCfg.maxZoom,
+    }).addTo(map);
+
+    tileLayerRef.current = newTileLayer;
+    newTileLayer.bringToBack();
+  }, [mapType, mapLoaded]);
+
+  // Render Overlays: Tract Catchment Highlights + Custom Numbered Pins + Clinics
+  const renderOverlays = useCallback(() => {
+    if (!mapLoaded || !layerGroupRef.current || !LRef.current) return;
+    const L = LRef.current;
+    const layerGroup = layerGroupRef.current;
+
+    layerGroup.clearLayers();
+
+    // 1. Draw Recommended Stops (Tracts #1–#4)
     RECOMMENDED_STOPS.forEach((stop) => {
       const pos = parseLatLng(stop.coordinates.lat, stop.coordinates.lng);
       const isSelected = stop.rank === selectedRank;
 
-      // Highlighted Census Tract Service Area Circle (Catchment Area)
-      const circle = new google.maps.Circle({
-        strokeColor: isSelected ? "#2dd4bf" : "#0d9488",
-        strokeOpacity: isSelected ? 0.95 : 0.6,
-        strokeWeight: isSelected ? 3 : 1.8,
-        fillColor: isSelected ? "#14b8a6" : "#0f766e",
-        fillOpacity: isSelected ? 0.35 : 0.2,
-        map,
-        center: pos,
-        radius: 2200, // ~2.2 km tract catchment area
+      // Census Tract Catchment Highlight Area (~2.2 km radius)
+      const circle = L.circle(pos, {
+        radius: 2200,
+        color: isSelected ? "#0d9488" : "#0f766e",
+        weight: isSelected ? 3.5 : 2,
+        fillColor: isSelected ? "#14b8a6" : "#0d9488",
+        fillOpacity: isSelected ? 0.38 : 0.22,
       });
 
-      circle.addListener("click", () => {
+      circle.on("click", () => {
         onSelectRank(stop.rank);
       });
-      circlesRef.current.push(circle);
+      circle.addTo(layerGroup);
 
-      // SVG Badge Pin Marker
-      const pinColor = isSelected ? "%232dd4bf" : "%230d9488";
-      const textColor = "%23ffffff";
-      const markerIcon = {
-        url: `data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48"><path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30s18-16.5 18-30C36 8.06 27.94 0 18 0z" fill="${pinColor}" stroke="%23ffffff" stroke-width="2"/><circle cx="18" cy="18" r="12" fill="%230f172a"/><text x="18" y="23" font-size="14" font-weight="bold" fill="${textColor}" text-anchor="middle" font-family="sans-serif">%23${stop.rank}</text></svg>`,
-        scaledSize: new google.maps.Size(36, 48),
-        anchor: new google.maps.Point(18, 48),
-      };
+      // Custom Numbered SVG Pin
+      const pinColor = isSelected ? "#0d9488" : "#0f766e";
+      const iconHtml = `
+        <div style="cursor: pointer; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); transform: ${
+          isSelected ? "scale(1.15)" : "scale(1)"
+        }; transition: transform 0.2s;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="34" height="46" viewBox="0 0 36 48">
+            <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30s18-16.5 18-30C36 8.06 27.94 0 18 0z" fill="${pinColor}" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="18" cy="18" r="12" fill="#0f172a"/>
+            <text x="18" y="23" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="system-ui, sans-serif">#${stop.rank}</text>
+          </svg>
+        </div>
+      `;
 
-      const marker = new google.maps.Marker({
-        position: pos,
-        map,
-        title: `Saturday #${stop.rank}: ${stop.siteName[locale]}`,
-        icon: markerIcon,
-        zIndex: isSelected ? 999 : 100,
-        animation: isSelected ? google.maps.Animation.BOUNCE : undefined,
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: "custom-stop-marker",
+        iconSize: [34, 46],
+        iconAnchor: [17, 46],
+        popupAnchor: [0, -46],
       });
 
-      if (isSelected && marker.getAnimation()) {
-        setTimeout(() => marker.setAnimation(null), 1400);
-      }
+      const marker = L.marker(pos, { icon: customIcon });
 
-      marker.addListener("click", () => {
+      const popupContent = `
+        <div style="color: #0f172a; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.4; padding: 2px;">
+          <div style="font-weight: 700; color: #0d9488; font-size: 13px; margin-bottom: 2px;">
+            Saturday #${stop.rank} · Tract ${stop.tractFips}
+          </div>
+          <div style="font-weight: 600; margin-bottom: 2px;">${stop.neighborhood[locale]}</div>
+          <div style="color: #475569; margin-bottom: 6px;">${stop.siteName[locale]}</div>
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 4px; font-size: 11px;">
+            <div>• Need Score: <strong>${stop.needScore}</strong></div>
+            <div>• Distance to Adult Clinic: <strong>${stop.metrics[0]?.value || ">2 km"}</strong></div>
+            <div style="color: #059669; font-weight: 600; margin-top: 2px;">✓ Exhaustive Audit Approved</div>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      marker.on("click", () => {
         onSelectRank(stop.rank);
-        if (infoWindowRef.current) {
-          const content = `
-            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; line-height: 1.4; max-width: 240px; padding: 4px;">
-              <strong style="color: #0f766e; font-size: 13px;">Saturday #${stop.rank} · ${stop.tractFips}</strong><br/>
-              <span style="font-weight: 600;">${stop.neighborhood[locale]}</span><br/>
-              <span style="color: #475569;">${stop.siteName[locale]}</span>
-              <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #e2e8f0;">
-                <div>• Need Score: <strong>${stop.needScore}</strong></div>
-                <div>• Status: <span style="color: #059669; font-weight: 600;">Audited & Approved</span></div>
-              </div>
-            </div>
-          `;
-          infoWindowRef.current.setContent(content);
-          infoWindowRef.current.open(map, marker);
-        }
       });
-
-      markersRef.current.push(marker);
+      marker.addTo(layerGroup);
     });
 
     // 2. Draw Rejected Draft Stop & Highlight if enabled
@@ -333,102 +294,94 @@ export function FultonMap({
         REJECTED_DRAFT_STOP.coordinates.lng
       );
 
-      const rejectCircle = new google.maps.Circle({
-        strokeColor: "#f43f5e",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: "#e11d48",
-        fillOpacity: 0.18,
-        map,
-        center: rejectPos,
+      const rejectCircle = L.circle(rejectPos, {
         radius: 2000,
+        color: "#e11d48",
+        weight: 2,
+        fillColor: "#f43f5e",
+        fillOpacity: 0.22,
       });
-      circlesRef.current.push(rejectCircle);
+      rejectCircle.addTo(layerGroup);
 
-      const rejectIcon = {
-        url: `data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="34" height="46" viewBox="0 0 36 48"><path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30s18-16.5 18-30C36 8.06 27.94 0 18 0z" fill="%23f43f5e" stroke="%23ffffff" stroke-width="2"/><circle cx="18" cy="18" r="11" fill="%234c0519"/><text x="18" y="23" font-size="14" font-weight="bold" fill="%23ffffff" text-anchor="middle" font-family="sans-serif">✕</text></svg>`,
-        scaledSize: new google.maps.Size(34, 46),
-        anchor: new google.maps.Point(17, 46),
-      };
+      const rejectIconHtml = `
+        <div style="cursor: pointer; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="44" viewBox="0 0 36 48">
+            <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30s18-16.5 18-30C36 8.06 27.94 0 18 0z" fill="#e11d48" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="18" cy="18" r="11" fill="#4c0519"/>
+            <text x="18" y="23" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="system-ui, sans-serif">✕</text>
+          </svg>
+        </div>
+      `;
 
-      const rejectMarker = new google.maps.Marker({
-        position: rejectPos,
-        map,
-        title: `REJECTED DRAFT: Tract ${REJECTED_DRAFT_STOP.tractFips}`,
-        icon: rejectIcon,
-        zIndex: 50,
-      });
-
-      rejectMarker.addListener("click", () => {
-        if (infoWindowRef.current) {
-          const content = `
-            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; line-height: 1.4; max-width: 240px; padding: 4px;">
-              <strong style="color: #e11d48; font-size: 13px;">REJECTED · ${REJECTED_DRAFT_STOP.tractFips}</strong><br/>
-              <span style="font-weight: 600;">${REJECTED_DRAFT_STOP.neighborhood[locale]}</span><br/>
-              <span style="color: #be123c;">Violated 4/5ths Rule (Black ratio = 0.45 FLAG)</span>
-            </div>
-          `;
-          infoWindowRef.current.setContent(content);
-          infoWindowRef.current.open(map, rejectMarker);
-        }
+      const rejectIcon = L.divIcon({
+        html: rejectIconHtml,
+        className: "custom-reject-marker",
+        iconSize: [32, 44],
+        iconAnchor: [16, 44],
+        popupAnchor: [0, -44],
       });
 
-      markersRef.current.push(rejectMarker);
+      const rejectMarker = L.marker(rejectPos, { icon: rejectIcon });
+      const rejectPopupContent = `
+        <div style="color: #0f172a; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.4;">
+          <div style="font-weight: 700; color: #e11d48; font-size: 13px;">REJECTED DRAFT · ${REJECTED_DRAFT_STOP.tractFips}</div>
+          <div style="font-weight: 600;">${REJECTED_DRAFT_STOP.neighborhood[locale]}</div>
+          <div style="color: #9f1239; margin-top: 4px; font-weight: 500;">Violated 4/5ths Rule (Black ratio = 0.45 FLAG)</div>
+        </div>
+      `;
+      rejectMarker.bindPopup(rejectPopupContent);
+      rejectMarker.addTo(layerGroup);
     }
 
-    // 3. Fixed Safety-Net Clinics (FQHCs) to visually show >2km rule
+    // 3. Fixed Safety-Net Clinics (FQHCs)
     FIXED_CLINICS.forEach((clinic) => {
-      const clinicIcon = {
-        url: `data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="12" fill="%233b82f6" stroke="%23ffffff" stroke-width="2"/><path d="M12 7h4v5h5v4h-5v5h-4v-5H7v-4h5z" fill="%23ffffff"/></svg>`,
-        scaledSize: new google.maps.Size(26, 26),
-        anchor: new google.maps.Point(13, 13),
-      };
+      const clinicIconHtml = `
+        <div style="cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">
+          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="13" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+            <path d="M12 7h4v5h5v4h-5v5h-4v-5H7v-4h5z" fill="#ffffff"/>
+          </svg>
+        </div>
+      `;
 
-      const marker = new google.maps.Marker({
-        position: { lat: clinic.lat, lng: clinic.lng },
-        map,
-        title: clinic.name,
-        icon: clinicIcon,
-        zIndex: 40,
+      const clinicIcon = L.divIcon({
+        html: clinicIconHtml,
+        className: "custom-clinic-marker",
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+        popupAnchor: [0, -13],
       });
 
-      marker.addListener("click", () => {
-        if (infoWindowRef.current) {
-          infoWindowRef.current.setContent(`
-            <div style="color: #0f172a; font-family: sans-serif; font-size: 12px; padding: 4px;">
-              <strong style="color: #2563eb;">${clinic.name}</strong><br/>
-              <span style="color: #64748b;">${clinic.type}</span><br/>
-              <span style="font-size: 11px; color: #475569;">Fixed Safety-Net Site (Van must keep >2 km spacing)</span>
-            </div>
-          `);
-          infoWindowRef.current.open(map, marker);
-        }
-      });
-
-      markersRef.current.push(marker);
+      const clinicMarker = L.marker([clinic.lat, clinic.lng], { icon: clinicIcon });
+      const clinicPopup = `
+        <div style="color: #0f172a; font-family: system-ui, sans-serif; font-size: 12px;">
+          <div style="font-weight: 700; color: #2563eb;">${clinic.name}</div>
+          <div style="color: #64748b; font-size: 11px;">${clinic.type}</div>
+          <div style="color: #475569; font-size: 10px; margin-top: 3px;">Fixed Clinic (Van must keep >2 km distance)</div>
+        </div>
+      `;
+      clinicMarker.bindPopup(clinicPopup);
+      clinicMarker.addTo(layerGroup);
     });
-  }, [selectedRank, showRejectedPin, locale, onSelectRank]);
+  }, [mapLoaded, selectedRank, showRejectedPin, locale, onSelectRank]);
 
   // Re-run overlays whenever selections or options change
   useEffect(() => {
-    if (mapLoaded && mapInstanceRef.current) {
-      renderOverlays();
-    }
-  }, [mapLoaded, renderOverlays]);
+    renderOverlays();
+  }, [renderOverlays]);
 
-  // Pan smoothly to selected stop when rank changes
+  // Fly to selected stop when rank changes
   useEffect(() => {
     if (mapInstanceRef.current && selectedStop) {
       const pos = parseLatLng(selectedStop.coordinates.lat, selectedStop.coordinates.lng);
-      mapInstanceRef.current.panTo(pos);
+      mapInstanceRef.current.flyTo(pos, 13, { duration: 0.8 });
     }
   }, [selectedStop]);
 
-  // Recenter button action
+  // Recenter button
   const handleRecenter = () => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.panTo({ lat: 33.72, lng: -84.45 });
-      mapInstanceRef.current.setZoom(11);
+      mapInstanceRef.current.flyTo([33.72, -84.45], 11, { duration: 0.8 });
     }
   };
 
@@ -439,7 +392,7 @@ export function FultonMap({
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30">
-              Google Maps API · Live Tract Dispatch
+              Google Maps &middot; Live Tract Dispatch
             </span>
             <h3 className="text-sm sm:text-base font-bold text-white">
               {locale === "en" && "Fulton County Google Street & Satellite Dispatch"}
@@ -449,11 +402,11 @@ export function FultonMap({
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
             {locale === "en" &&
-              "Real Google Map with highlighted census tract catchment areas (~2.2 km) and FQHC fixed clinic spacing."}
+              "Live Google Street & Satellite map highlighting census tract catchment zones (~2.2 km) and fixed FQHC clinic buffers."}
             {locale === "es" &&
-              "Mapa de Google real con áreas de cobertura de tramos resaltadas (~2.2 km) y clínicas fijas."}
+              "Mapa satelital y de calles de Google con zonas de cobertura (~2.2 km) y clínicas fijas FQHC."}
             {locale === "vi" &&
-              "Bản đồ Google thực tế với các vùng phân khu điều tra được tô sáng (~2.2 km) và phòng khám cố định."}
+              "Bản đồ đường phố & vệ tinh Google với vùng phủ sóng phân khu (~2.2 km) và phòng khám FQHC."}
           </p>
         </div>
 
@@ -463,27 +416,30 @@ export function FultonMap({
           <div className="inline-flex rounded-lg border border-slate-700 bg-slate-800 p-0.5 text-xs">
             <button
               type="button"
-              onClick={() => {
-                setMapType("roadmap");
-                if (mapInstanceRef.current) mapInstanceRef.current.setMapTypeId("roadmap");
-              }}
+              onClick={() => setMapType("google_road")}
               className={`px-2.5 py-1 rounded-md transition ${
-                mapType === "roadmap" ? "bg-teal-600 text-white font-medium" : "text-slate-300 hover:text-white"
+                mapType === "google_road" ? "bg-teal-600 text-white font-medium" : "text-slate-300 hover:text-white"
               }`}
             >
-              Street
+              Google Street
             </button>
             <button
               type="button"
-              onClick={() => {
-                setMapType("hybrid");
-                if (mapInstanceRef.current) mapInstanceRef.current.setMapTypeId("hybrid");
-              }}
+              onClick={() => setMapType("google_hybrid")}
               className={`px-2.5 py-1 rounded-md transition ${
-                mapType === "hybrid" ? "bg-teal-600 text-white font-medium" : "text-slate-300 hover:text-white"
+                mapType === "google_hybrid" ? "bg-teal-600 text-white font-medium" : "text-slate-300 hover:text-white"
               }`}
             >
-              Satellite
+              Google Satellite
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapType("dark")}
+              className={`px-2.5 py-1 rounded-md transition ${
+                mapType === "dark" ? "bg-teal-600 text-white font-medium" : "text-slate-300 hover:text-white"
+              }`}
+            >
+              Dark
             </button>
           </div>
 
@@ -512,11 +468,11 @@ export function FultonMap({
         </div>
       </div>
 
-      {/* Google Maps Container */}
+      {/* Map Container */}
       <div className="relative w-full h-[400px] sm:h-[460px] bg-slate-950">
-        <div ref={mapContainerRef} className="w-full h-full" />
+        <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-        {!mapLoaded && !mapError && (
+        {!mapLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs z-20">
             <div className="text-center space-y-2">
               <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -525,19 +481,8 @@ export function FultonMap({
           </div>
         )}
 
-        {mapError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/90 z-20 p-4">
-            <div className="max-w-md bg-slate-900 border border-amber-500/40 rounded-xl p-4 text-center space-y-2">
-              <p className="text-xs text-amber-300 font-medium">{mapError}</p>
-              <p className="text-[11px] text-slate-400">
-                To use your custom Google Maps key, set <code className="text-teal-300">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Selected Tract HUD Badge */}
-        <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl max-w-xs z-10 pointer-events-none">
+        <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl max-w-xs z-[500] pointer-events-none">
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse" />
             <span className="text-[11px] font-bold text-teal-300 uppercase tracking-wide">
@@ -545,14 +490,14 @@ export function FultonMap({
             </span>
           </div>
           <p className="text-xs font-semibold text-white">
-            Saturday #{selectedStop.rank} · Tract {selectedStop.tractFips}
+            Saturday #{selectedStop.rank} &middot; Tract {selectedStop.tractFips}
           </p>
           <p className="text-[11px] text-slate-300 truncate">
             {selectedStop.siteName[locale]}
           </p>
           <div className="mt-1.5 flex items-center gap-2 text-[10px] text-slate-400">
             <span>Score: <strong className="text-white">{selectedStop.needScore}</strong></span>
-            <span>•</span>
+            <span>&bull;</span>
             <span className="text-teal-300">{labels.tractHighlight}</span>
           </div>
         </div>
